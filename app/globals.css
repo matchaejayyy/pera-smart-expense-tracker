@@ -48,6 +48,7 @@ h2 { margin-bottom: 0; font-size: 20px; letter-spacing: -.025em; }
 .secondary-button { min-height: 38px; background: #eff1eb; color: var(--ink); }
 .demo-badge { padding: 8px 11px; border: 1px solid var(--line); border-radius: 999px; background: rgba(251,252,248,.82); color: var(--muted); display: flex; align-items: center; gap: 6px; font-size: 10px; font-weight: 800; }
 .demo-badge i { width: 7px; height: 7px; border-radius: 50%; background: var(--lime-strong); box-shadow: 0 0 0 3px rgba(181,243,0,.16); }
+.demo-badge.live { border-color: #bee3d0; color: #43765b; background: #eefaf3; }
 .summary-grid { display: grid; grid-template-columns: 1.45fr repeat(3, 1fr); gap: 14px; margin: 20px 0 14px; }
 .summary-card, .panel { border: 1px solid var(--line); background: rgba(251,252,248,.95); border-radius: 22px; }
 .summary-card { padding: 20px; min-height: 132px; }

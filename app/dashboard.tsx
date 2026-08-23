@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import type { FormEvent } from "react";
 import { Area, AreaChart, CartesianGrid, Cell, Pie, PieChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import {
@@ -84,6 +84,30 @@ export function Dashboard() {
   const [reportRange, setReportRange] = useState("6 months");
   const [toast, setToast] = useState<string | null>(null);
   const [smartRule, setSmartRule] = useState(false);
+  const [dataMode, setDataMode] = useState<"checking" | "demo" | "live">("checking");
+
+  useEffect(() => {
+    let mounted = true;
+    Promise.all([
+      fetch("/api/transactions").then((response) => response.json()),
+      fetch("/api/budgets").then((response) => response.json()),
+      fetch("/api/recurring").then((response) => response.json()),
+    ]).then(([transactionPayload, budgetPayload, recurringPayload]) => {
+      if (!mounted) return;
+      const isDemo = transactionPayload.demo || budgetPayload.demo || recurringPayload.demo;
+      setDataMode(isDemo ? "demo" : "live");
+      if (!isDemo && transactionPayload.data?.length) {
+        setTransactions(transactionPayload.data.map((item: { id: string; merchant: string; category?: { name: string } | null; bookedAt: string; amount: string; type: TransactionType }) => ({ id: Number.parseInt(item.id.replace(/\D/g, "").slice(0, 12), 10) || Date.now(), merchant: item.merchant, category: item.category?.name ?? "Other", date: new Date(item.bookedAt).toLocaleDateString("en-PH", { month: "short", day: "numeric" }), amount: Number(item.amount), type: item.type, tone: item.type === "INCOME" ? "lime" : item.type === "SAVINGS" ? "blue" : "peach" })));
+      }
+      if (!isDemo && budgetPayload.data?.length) {
+        setBudgets(budgetPayload.data.map((item: { category: { name: string; color: string }; limit: string; spent?: number }) => ({ name: item.category.name, color: item.category.color, limit: Number(item.limit), spent: item.spent ?? 0 })));
+      }
+      if (!isDemo && recurringPayload.data?.length) {
+        setRecurring(recurringPayload.data.map((item: { id: string; name: string; category?: { name: string } | null; amount: string; nextDueAt: string; isActive: boolean }) => ({ id: Number.parseInt(item.id.replace(/\D/g, "").slice(0, 12), 10) || Date.now(), name: item.name, category: item.category?.name ?? "Other", amount: Number(item.amount), due: new Date(item.nextDueAt).toLocaleDateString("en-PH", { month: "short", day: "2-digit" }), active: item.isActive, tone: "mint" })));
+      }
+    }).catch(() => mounted && setDataMode("demo"));
+    return () => { mounted = false; };
+  }, []);
 
   const totals = useMemo(() => {
     const income = transactions.filter((item) => item.type === "INCOME").reduce((sum, item) => sum + item.amount, 0);
@@ -107,6 +131,8 @@ export function Dashboard() {
     const amount = Number(data.get("amount"));
     const category = String(data.get("category"));
     setTransactions((current) => [{ id: Date.now(), merchant, category, amount, type, date: "Just now", tone: type === "INCOME" ? "lime" : type === "SAVINGS" ? "blue" : "peach" }, ...current]);
+    void fetch("/api/transactions", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ merchant, amount, type, category }) })
+      .then((response) => { if (response.ok) setDataMode("live"); });
     setTransactionModal(false);
     notify(`${merchant} was added`);
   };
@@ -115,8 +141,19 @@ export function Dashboard() {
     event.preventDefault();
     if (budgetModal === null) return;
     setBudgets((items) => items.map((item, index) => index === budgetModal ? { ...item, limit: budgetDraft } : item));
+    const budget = budgets[budgetModal];
+    void fetch("/api/budgets", { method: "PATCH", headers: { "content-type": "application/json" }, body: JSON.stringify({ name: budget.name, limit: budgetDraft, color: budget.color }) })
+      .then((response) => { if (response.ok) setDataMode("live"); });
     setBudgetModal(null);
     notify("Budget limit updated");
+  };
+
+  const toggleRecurring = (id: number) => {
+    const item = recurring.find((entry) => entry.id === id);
+    if (!item) return;
+    setRecurring((items) => items.map((entry) => entry.id === id ? { ...entry, active: !entry.active } : entry));
+    void fetch("/api/recurring", { method: "PATCH", headers: { "content-type": "application/json" }, body: JSON.stringify({ name: item.name, isActive: !item.active }) })
+      .then((response) => { if (response.ok) setDataMode("live"); });
   };
 
   const filteredTransactions = transactionFilter === "All" ? transactions : transactions.filter((item) => item.type === transactionFilter);
@@ -135,7 +172,7 @@ export function Dashboard() {
       <section className="workspace">
         <header className="topbar">
           <div><p className="eyebrow">{pageMeta[activePage].eyebrow}</p><h1>{pageMeta[activePage].title}</h1></div>
-          <div className="header-actions"><span className="demo-badge"><i />Demo data</span><button className="add-button" onClick={() => setTransactionModal(true)}><Plus size={17} />Add transaction</button><button className="icon-button" aria-label="Notifications" onClick={() => notify("You're all caught up")}><Bell size={18} /><i /></button><button className="avatar" aria-label="Open Elmor's profile" onClick={() => notify("Profile syncs with Supabase Auth")}>EC</button></div>
+          <div className="header-actions"><span className={dataMode === "live" ? "demo-badge live" : "demo-badge"}><i />{dataMode === "checking" ? "Checking data" : dataMode === "live" ? "Supabase synced" : "Demo data"}</span><button className="add-button" onClick={() => setTransactionModal(true)}><Plus size={17} />Add transaction</button><button className="icon-button" aria-label="Notifications" onClick={() => notify("You're all caught up")}><Bell size={18} /><i /></button><button className="avatar" aria-label="Open Elmor's profile" onClick={() => notify("Profile syncs with Supabase Auth")}>EC</button></div>
         </header>
 
         {activePage === "Overview" && <>
@@ -163,7 +200,7 @@ export function Dashboard() {
 
         {activePage === "Budgets" && <section className="page-grid budgets-page"><article className="panel wide-panel"><div className="section-intro"><div><p className="eyebrow">August plan</p><h2>{currency(totalSpent, true)} of {currency(totalBudget, true)} used</h2></div><span className="large-percent">{budgetPercent}%</span></div><div className="overall-progress"><i style={{ width: `${budgetPercent}%` }} /></div><div className="budget-list">{budgets.map((budget, index) => { const percent = Math.round(budget.spent / budget.limit * 100); return <div className="budget-item" key={budget.name}><div className="budget-item-head"><span><i style={{ background: budget.color }} />{budget.name}</span><button onClick={() => { setBudgetModal(index); setBudgetDraft(budget.limit); }}>Edit</button></div><div className="category-progress"><i style={{ width: `${Math.min(percent, 100)}%`, background: percent > 85 ? "#ff765f" : budget.color }} /></div><div className="budget-item-copy"><span>{currency(budget.spent, true)} spent</span><span>{currency(budget.limit - budget.spent, true)} left</span></div></div>; })}</div></article><aside className="panel budget-advice"><span className="spark dark"><Lightbulb size={20} /></span><p className="eyebrow">Smart budget tip</p><h2>Transport is close to its limit.</h2><p>You have {currency(1220, true)} left for 8 days. A daily cap of ₱152 will keep you on track.</p><button onClick={() => notify("Daily transport reminder created")}>Set daily reminder</button></aside></section>}
 
-        {activePage === "Recurring" && <section className="page-grid recurring-page"><article className="panel wide-panel"><div className="panel-title-row"><div><p className="eyebrow">August–September</p><h2>Payment schedule</h2></div><button className="secondary-button" onClick={() => notify("Recurring expense form is ready to connect")}><Plus size={15} />Add recurring</button></div><div className="recurring-list">{recurring.map((item) => <div className="recurring-item" key={item.id}><div className="due-chip"><CalendarClock size={15} /><span><small>Due</small><strong>{item.due}</strong></span></div><MerchantIcon label={item.name} tone={item.tone} /><span className="transaction-main"><strong>{item.name}</strong><small>{item.category} · Monthly</small></span><strong>{currency(item.amount)}</strong><button className={item.active ? "toggle active" : "toggle"} onClick={() => setRecurring((items) => items.map((entry) => entry.id === item.id ? { ...entry, active: !entry.active } : entry))} aria-label={`${item.active ? "Pause" : "Resume"} ${item.name}`}><i /></button></div>)}</div></article><aside className="panel upcoming-total"><p className="eyebrow">Next 30 days</p><h2>Recurring total</h2><strong>{currency(recurring.filter((item) => item.active).reduce((sum, item) => sum + item.amount, 0))}</strong><div className="upcoming-visual"><Repeat2 size={40} /><span>4 payments<br />scheduled</span></div><p>That&apos;s 4.9% of your monthly income.</p></aside></section>}
+        {activePage === "Recurring" && <section className="page-grid recurring-page"><article className="panel wide-panel"><div className="panel-title-row"><div><p className="eyebrow">August–September</p><h2>Payment schedule</h2></div><button className="secondary-button" onClick={() => notify("Recurring expense form is ready to connect")}><Plus size={15} />Add recurring</button></div><div className="recurring-list">{recurring.map((item) => <div className="recurring-item" key={item.id}><div className="due-chip"><CalendarClock size={15} /><span><small>Due</small><strong>{item.due}</strong></span></div><MerchantIcon label={item.name} tone={item.tone} /><span className="transaction-main"><strong>{item.name}</strong><small>{item.category} · Monthly</small></span><strong>{currency(item.amount)}</strong><button className={item.active ? "toggle active" : "toggle"} onClick={() => toggleRecurring(item.id)} aria-label={`${item.active ? "Pause" : "Resume"} ${item.name}`}><i /></button></div>)}</div></article><aside className="panel upcoming-total"><p className="eyebrow">Next 30 days</p><h2>Recurring total</h2><strong>{currency(recurring.filter((item) => item.active).reduce((sum, item) => sum + item.amount, 0))}</strong><div className="upcoming-visual"><Repeat2 size={40} /><span>4 payments<br />scheduled</span></div><p>That&apos;s 4.9% of your monthly income.</p></aside></section>}
 
         {activePage === "Reports" && <section className="reports-grid"><article className="panel report-chart"><div className="panel-title-row"><div><p className="eyebrow">Net cash flow</p><h2>Financial performance</h2></div><select value={reportRange} onChange={(event) => setReportRange(event.target.value)} aria-label="Report period"><option>6 months</option><option>12 months</option></select></div><div className="report-kpis"><span><small>Total income</small><strong>₱479k</strong><em>+12.4%</em></span><span><small>Total spent</small><strong>₱271k</strong><em>−4.1%</em></span><span><small>Net saved</small><strong>₱208k</strong><em>+22.8%</em></span></div><div className="report-area"><ResponsiveContainer width="100%" height="100%"><AreaChart data={cashFlowData}><defs><linearGradient id="reportFill" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor="#b5f300" stopOpacity={0.45} /><stop offset="100%" stopColor="#b5f300" stopOpacity={0.02} /></linearGradient></defs><CartesianGrid vertical={false} stroke="#e5e8df" /><XAxis dataKey="month" axisLine={false} tickLine={false} /><YAxis hide /><Tooltip content={<ChartTooltip />} /><Area type="monotone" dataKey="income" stroke="#8cc000" fill="url(#reportFill)" strokeWidth={3} /><Area type="monotone" dataKey="spending" stroke="#171816" fill="transparent" strokeWidth={2} /></AreaChart></ResponsiveContainer></div></article><article className="panel category-card"><p className="eyebrow">August breakdown</p><h2>Spending by category</h2><div className="donut-wrap"><ResponsiveContainer width="100%" height="100%"><PieChart><Pie data={categoryData} dataKey="value" innerRadius="63%" outerRadius="88%" paddingAngle={3} stroke="none">{categoryData.map((item) => <Cell key={item.name} fill={item.color} />)}</Pie><Tooltip formatter={(value) => `${value}%`} /></PieChart></ResponsiveContainer><div><strong>{currency(totals.expenses, true)}</strong><span>total spent</span></div></div><div className="category-legend">{categoryData.map((item) => <span key={item.name}><i style={{ background: item.color }} />{item.name}<strong>{item.value}%</strong></span>)}</div></article></section>}
 
