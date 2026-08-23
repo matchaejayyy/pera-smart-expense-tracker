@@ -1,0 +1,163 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../app/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum TransactionType {
+  INCOME
+  EXPENSE
+  SAVINGS
+  TRANSFER
+}
+
+enum AccountType {
+  CASH
+  CHECKING
+  SAVINGS
+  CREDIT_CARD
+  E_WALLET
+}
+
+enum RecurringFrequency {
+  WEEKLY
+  BIWEEKLY
+  MONTHLY
+  QUARTERLY
+  YEARLY
+}
+
+model Profile {
+  id          String   @id @db.Uuid
+  displayName String?
+  currency    String   @default("PHP")
+  timezone    String   @default("Asia/Manila")
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("profiles")
+}
+
+model Account {
+  id           String        @id @default(uuid()) @db.Uuid
+  ownerId      String        @db.Uuid
+  name         String
+  type         AccountType
+  currency     String        @default("PHP")
+  openingBalance Decimal     @default(0) @db.Decimal(14, 2)
+  isArchived   Boolean       @default(false)
+  transactions Transaction[]
+  recurring    RecurringExpense[]
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+
+  @@index([ownerId, isArchived])
+  @@map("accounts")
+}
+
+model Category {
+  id           String        @id @default(uuid()) @db.Uuid
+  ownerId      String        @db.Uuid
+  name         String
+  slug         String
+  color        String        @default("#B5F300")
+  icon         String?
+  transactionType TransactionType @default(EXPENSE)
+  transactions Transaction[]
+  budgets      Budget[]
+  recurring    RecurringExpense[]
+  createdAt    DateTime      @default(now())
+
+  @@unique([ownerId, slug])
+  @@index([ownerId])
+  @@map("categories")
+}
+
+model Transaction {
+  id          String          @id @default(uuid()) @db.Uuid
+  ownerId     String          @db.Uuid
+  accountId   String          @db.Uuid
+  categoryId  String?         @db.Uuid
+  type        TransactionType
+  merchant    String
+  note        String?
+  amount      Decimal         @db.Decimal(14, 2)
+  bookedAt    DateTime
+  isRecurring Boolean         @default(false)
+  account     Account         @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  category    Category?       @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+
+  @@index([ownerId, bookedAt(sort: Desc)])
+  @@index([accountId])
+  @@index([categoryId])
+  @@map("transactions")
+}
+
+model Budget {
+  id         String   @id @default(uuid()) @db.Uuid
+  ownerId    String   @db.Uuid
+  categoryId String   @db.Uuid
+  month      DateTime @db.Date
+  limit      Decimal  @db.Decimal(14, 2)
+  category   Category @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@unique([ownerId, categoryId, month])
+  @@index([ownerId, month])
+  @@map("budgets")
+}
+
+model RecurringExpense {
+  id          String             @id @default(uuid()) @db.Uuid
+  ownerId     String             @db.Uuid
+  accountId   String             @db.Uuid
+  categoryId  String?            @db.Uuid
+  name        String
+  amount      Decimal            @db.Decimal(14, 2)
+  frequency   RecurringFrequency @default(MONTHLY)
+  nextDueAt   DateTime
+  isActive    Boolean            @default(true)
+  account     Account            @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  category    Category?          @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+  createdAt   DateTime           @default(now())
+  updatedAt   DateTime           @updatedAt
+
+  @@index([ownerId, nextDueAt])
+  @@map("recurring_expenses")
+}
+
+model SavingsGoal {
+  id            String   @id @default(uuid()) @db.Uuid
+  ownerId       String   @db.Uuid
+  name          String
+  targetAmount  Decimal  @db.Decimal(14, 2)
+  currentAmount Decimal  @default(0) @db.Decimal(14, 2)
+  targetDate    DateTime?
+  color         String   @default("#B5F300")
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@index([ownerId])
+  @@map("savings_goals")
+}
+
+model Insight {
+  id          String   @id @default(uuid()) @db.Uuid
+  ownerId     String   @db.Uuid
+  title       String
+  body        String
+  kind        String
+  actionLabel String?
+  actionData  Json?
+  generatedAt DateTime @default(now())
+  dismissedAt DateTime?
+
+  @@index([ownerId, generatedAt(sort: Desc)])
+  @@map("insights")
+}
