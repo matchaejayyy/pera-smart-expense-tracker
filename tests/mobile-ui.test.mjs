@@ -21,9 +21,10 @@ test("mobile dashboard uses safe areas, glass navigation, and animated page chan
   assert.match(styles, /border-radius: 26px/);
   assert.match(styles, /@media \(display-mode: standalone\) and \(max-width: 720px\)/);
   assert.match(styles, /\.sidebar \{ bottom: 12px; -webkit-backdrop-filter: none; backdrop-filter: none; \}/);
-  assert.match(styles, /\.topbar \{ isolation: isolate; z-index: 2; -webkit-transform: none !important; transform: none !important; \}/);
+  assert.match(styles, /\.topbar \{ position: static; isolation: auto; z-index: auto; -webkit-transform: none !important; transform: none !important; \}/);
   assert.match(styles, /\.topbar-title \{ animation: none;/);
-  assert.match(styles, /body::before, body::after \{ display: none; \}/);
+  assert.match(styles, /body::before \{ content: none !important; display: none !important; filter: none !important; \}/);
+  assert.match(styles, /\.topbar::before, \.topbar::after, \.topbar \*::before, \.topbar \*::after \{ content: none !important; \}/);
   assert.match(styles, /\.topbar \.eyebrow \{ color: #666a60; font-size: 10px; font-weight: 900; \}/);
   assert.match(styles, /\.page-stage \{ animation: standalone-page-enter/);
   assert.match(styles, /\.sidebar \.nav-item svg, \.sidebar \.nav-item\.active svg \{ -webkit-transform: none; transform: none; filter: none;/);

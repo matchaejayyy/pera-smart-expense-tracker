@@ -336,9 +336,10 @@ button:disabled { opacity: .52; cursor: not-allowed !important; }
 }
 
 @media (display-mode: standalone) and (max-width: 720px) {
-  body::before, body::after { display: none; }
-  .topbar { isolation: isolate; z-index: 2; -webkit-transform: none !important; transform: none !important; }
-  .topbar, .topbar * { -webkit-filter: none !important; filter: none !important; }
+  body::before { content: none !important; display: none !important; filter: none !important; }
+  .topbar { position: static; isolation: auto; z-index: auto; -webkit-transform: none !important; transform: none !important; }
+  .topbar, .topbar *, .topbar::before, .topbar::after, .topbar *::before, .topbar *::after { -webkit-filter: none !important; filter: none !important; -webkit-backdrop-filter: none !important; backdrop-filter: none !important; }
+  .topbar::before, .topbar::after, .topbar *::before, .topbar *::after { content: none !important; }
   .topbar-title { animation: none; -webkit-transform: none; transform: none; }
   .topbar .eyebrow { color: #666a60; font-size: 10px; font-weight: 900; }
   .page-stage { animation: standalone-page-enter .22s ease both; -webkit-transform: none !important; transform: none !important; }
