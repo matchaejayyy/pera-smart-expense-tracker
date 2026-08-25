@@ -30,6 +30,11 @@ enum RecurringFrequency {
   YEARLY
 }
 
+enum BalanceAdjustmentType {
+  ADD
+  SUBTRACT
+}
+
 model Profile {
   id                   String   @id @db.Uuid
   displayName          String?
@@ -46,34 +51,37 @@ model Profile {
 }
 
 model Account {
-  id           String        @id @default(uuid()) @db.Uuid
-  ownerId      String        @db.Uuid
-  name         String
-  type         AccountType
-  currency     String        @default("PHP")
-  openingBalance Decimal     @default(0) @db.Decimal(14, 2)
-  isArchived   Boolean       @default(false)
-  transactions Transaction[]
-  recurring    RecurringExpense[]
-  createdAt    DateTime      @default(now())
-  updatedAt    DateTime      @updatedAt
+  id                String              @id @default(uuid()) @db.Uuid
+  ownerId           String              @db.Uuid
+  name              String
+  type              AccountType
+  currency          String              @default("PHP")
+  openingBalance    Decimal             @default(0) @db.Decimal(14, 2)
+  isArchived        Boolean             @default(false)
+  transactions      Transaction[]
+  recurring         RecurringExpense[]
+  adjustments       AccountAdjustment[]
+  outgoingTransfers AccountTransfer[]   @relation("OutgoingTransfers")
+  incomingTransfers AccountTransfer[]   @relation("IncomingTransfers")
+  createdAt         DateTime            @default(now())
+  updatedAt         DateTime            @updatedAt
 
   @@index([ownerId, isArchived])
   @@map("accounts")
 }
 
 model Category {
-  id           String        @id @default(uuid()) @db.Uuid
-  ownerId      String        @db.Uuid
-  name         String
-  slug         String
-  color        String        @default("#B5F300")
-  icon         String?
-  transactionType TransactionType @default(EXPENSE)
-  transactions Transaction[]
-  budgets      Budget[]
-  recurring    RecurringExpense[]
-  createdAt    DateTime      @default(now())
+  id              String             @id @default(uuid()) @db.Uuid
+  ownerId         String             @db.Uuid
+  name            String
+  slug            String
+  color           String             @default("#B5F300")
+  icon            String?
+  transactionType TransactionType    @default(EXPENSE)
+  transactions    Transaction[]
+  budgets         Budget[]
+  recurring       RecurringExpense[]
+  createdAt       DateTime           @default(now())
 
   @@unique([ownerId, slug])
   @@index([ownerId])
@@ -81,28 +89,76 @@ model Category {
 }
 
 model Transaction {
-  id          String          @id @default(uuid()) @db.Uuid
-  ownerId     String          @db.Uuid
-  accountId   String          @db.Uuid
-  categoryId  String?         @db.Uuid
-  savingsGoalId String?       @db.Uuid
-  type        TransactionType
-  merchant    String
-  note        String?
-  amount      Decimal         @db.Decimal(14, 2)
-  bookedAt    DateTime
-  isRecurring Boolean         @default(false)
-  account     Account         @relation(fields: [accountId], references: [id], onDelete: Cascade)
-  category    Category?       @relation(fields: [categoryId], references: [id], onDelete: SetNull)
-  savingsGoal SavingsGoal?    @relation(fields: [savingsGoalId], references: [id], onDelete: SetNull)
-  createdAt   DateTime        @default(now())
-  updatedAt   DateTime        @updatedAt
+  id                 String          @id @default(uuid()) @db.Uuid
+  ownerId            String          @db.Uuid
+  accountId          String          @db.Uuid
+  categoryId         String?         @db.Uuid
+  savingsGoalId      String?         @db.Uuid
+  type               TransactionType
+  merchant           String
+  note               String?
+  amount             Decimal         @db.Decimal(14, 2)
+  bookedAt           DateTime
+  isRecurring        Boolean         @default(false)
+  countsTowardBudget Boolean         @default(true)
+  account            Account         @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  category           Category?       @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+  savingsGoal        SavingsGoal?    @relation(fields: [savingsGoalId], references: [id], onDelete: SetNull)
+  createdAt          DateTime        @default(now())
+  updatedAt          DateTime        @updatedAt
 
   @@index([ownerId, bookedAt(sort: Desc)])
   @@index([accountId])
   @@index([categoryId])
   @@index([savingsGoalId])
   @@map("transactions")
+}
+
+model MonthlyBudget {
+  id        String   @id @default(uuid()) @db.Uuid
+  ownerId   String   @db.Uuid
+  month     DateTime @db.Date
+  limit     Decimal  @db.Decimal(14, 2)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([ownerId, month])
+  @@index([ownerId, month])
+  @@map("monthly_budgets")
+}
+
+model AccountAdjustment {
+  id         String                @id @default(uuid()) @db.Uuid
+  ownerId    String                @db.Uuid
+  accountId  String                @db.Uuid
+  direction  BalanceAdjustmentType
+  amount     Decimal               @db.Decimal(14, 2)
+  note       String?
+  adjustedAt DateTime
+  account    Account               @relation(fields: [accountId], references: [id], onDelete: Restrict)
+  createdAt  DateTime              @default(now())
+
+  @@index([ownerId, adjustedAt(sort: Desc)])
+  @@index([accountId])
+  @@map("account_adjustments")
+}
+
+model AccountTransfer {
+  id            String   @id @default(uuid()) @db.Uuid
+  ownerId       String   @db.Uuid
+  fromAccountId String   @db.Uuid
+  toAccountId   String   @db.Uuid
+  amount        Decimal  @db.Decimal(14, 2)
+  note          String?
+  transferredAt DateTime
+  fromAccount   Account  @relation("OutgoingTransfers", fields: [fromAccountId], references: [id], onDelete: Restrict)
+  toAccount     Account  @relation("IncomingTransfers", fields: [toAccountId], references: [id], onDelete: Restrict)
+  createdAt     DateTime @default(now())
+
+  @@index([ownerId, transferredAt(sort: Desc)])
+  @@index([fromAccountId])
+  @@index([toAccountId])
+  @@map("account_transfers")
 }
 
 model Budget {
@@ -121,49 +177,49 @@ model Budget {
 }
 
 model RecurringExpense {
-  id          String             @id @default(uuid()) @db.Uuid
-  ownerId     String             @db.Uuid
-  accountId   String             @db.Uuid
-  categoryId  String?            @db.Uuid
-  name        String
-  amount      Decimal            @db.Decimal(14, 2)
-  frequency   RecurringFrequency @default(MONTHLY)
-  nextDueAt   DateTime
-  isActive    Boolean            @default(true)
-  account     Account            @relation(fields: [accountId], references: [id], onDelete: Cascade)
-  category    Category?          @relation(fields: [categoryId], references: [id], onDelete: SetNull)
-  createdAt   DateTime           @default(now())
-  updatedAt   DateTime           @updatedAt
+  id         String             @id @default(uuid()) @db.Uuid
+  ownerId    String             @db.Uuid
+  accountId  String             @db.Uuid
+  categoryId String?            @db.Uuid
+  name       String
+  amount     Decimal            @db.Decimal(14, 2)
+  frequency  RecurringFrequency @default(MONTHLY)
+  nextDueAt  DateTime
+  isActive   Boolean            @default(true)
+  account    Account            @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  category   Category?          @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+  createdAt  DateTime           @default(now())
+  updatedAt  DateTime           @updatedAt
 
   @@index([ownerId, nextDueAt])
   @@map("recurring_expenses")
 }
 
 model SavingsGoal {
-  id            String   @id @default(uuid()) @db.Uuid
-  ownerId       String   @db.Uuid
+  id            String        @id @default(uuid()) @db.Uuid
+  ownerId       String        @db.Uuid
   name          String
-  targetAmount  Decimal? @db.Decimal(14, 2)
-  currentAmount Decimal  @default(0) @db.Decimal(14, 2)
+  targetAmount  Decimal?      @db.Decimal(14, 2)
+  currentAmount Decimal       @default(0) @db.Decimal(14, 2)
   targetDate    DateTime?
-  color         String   @default("#B5F300")
+  color         String        @default("#B5F300")
   transactions  Transaction[]
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
 
   @@index([ownerId])
   @@map("savings_goals")
 }
 
 model Insight {
-  id          String   @id @default(uuid()) @db.Uuid
-  ownerId     String   @db.Uuid
+  id          String    @id @default(uuid()) @db.Uuid
+  ownerId     String    @db.Uuid
   title       String
   body        String
   kind        String
   actionLabel String?
   actionData  Json?
-  generatedAt DateTime @default(now())
+  generatedAt DateTime  @default(now())
   dismissedAt DateTime?
 
   @@index([ownerId, generatedAt(sort: Desc)])

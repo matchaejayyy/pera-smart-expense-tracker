@@ -13,7 +13,7 @@ async function context() {
 export async function GET() {
   const current = await context();
   if (!current) return NextResponse.json({ error: "The Prisma database connection is not configured." }, { status: 503 });
-  const data = await current.prisma.recurringExpense.findMany({ where: { ownerId: current.user.id }, include: { category: true }, orderBy: { nextDueAt: "asc" } });
+  const data = await current.prisma.recurringExpense.findMany({ where: { ownerId: current.user.id }, include: { category: true, account: true }, orderBy: { nextDueAt: "asc" } });
   return NextResponse.json({ data });
 }
 
@@ -23,15 +23,16 @@ export async function POST(request: Request) {
 
   const body = await request.json() as {
     name?: string;
+    accountId?: string;
     categoryId?: string;
     amount?: number;
     nextDueAt?: string;
     frequency?: "WEEKLY" | "BIWEEKLY" | "MONTHLY" | "QUARTERLY" | "YEARLY";
   };
-  if (!body.name || !body.categoryId || !body.amount || !body.nextDueAt) return NextResponse.json({ error: "Name, category, amount, and next due date are required." }, { status: 400 });
+  if (!body.name || !body.accountId || !body.categoryId || !body.amount || !body.nextDueAt) return NextResponse.json({ error: "Name, payment account, category, amount, and next due date are required." }, { status: 400 });
 
-  const account = await current.prisma.account.findFirst({ where: { ownerId: current.user.id, isArchived: false } })
-    ?? await current.prisma.account.create({ data: { ownerId: current.user.id, name: "Primary account", type: "CHECKING", openingBalance: 0 } });
+  const account = await current.prisma.account.findFirst({ where: { id: body.accountId, ownerId: current.user.id, isArchived: false } });
+  if (!account) return NextResponse.json({ error: "Payment account not found." }, { status: 404 });
 
   const category = await current.prisma.category.findFirst({ where: { id: body.categoryId, ownerId: current.user.id } });
   if (!category) return NextResponse.json({ error: "Category not found." }, { status: 404 });
@@ -46,7 +47,7 @@ export async function POST(request: Request) {
       nextDueAt: new Date(body.nextDueAt),
       frequency: body.frequency ?? "MONTHLY",
     },
-    include: { category: true },
+    include: { category: true, account: true },
   });
   return NextResponse.json({ data }, { status: 201 });
 }
@@ -54,12 +55,18 @@ export async function POST(request: Request) {
 export async function PATCH(request: Request) {
   const current = await context();
   if (!current) return NextResponse.json({ error: "Connect the Prisma database to update recurring expenses." }, { status: 503 });
-  const body = await request.json() as { id?: string; name?: string; isActive?: boolean; categoryId?: string; amount?: number; nextDueAt?: string; frequency?: "WEEKLY" | "BIWEEKLY" | "MONTHLY" | "QUARTERLY" | "YEARLY" };
+  const body = await request.json() as { id?: string; name?: string; isActive?: boolean; accountId?: string; categoryId?: string; amount?: number; nextDueAt?: string; frequency?: "WEEKLY" | "BIWEEKLY" | "MONTHLY" | "QUARTERLY" | "YEARLY" };
   if (!body.id) return NextResponse.json({ error: "Recurring expense id is required." }, { status: 400 });
   const existing = await current.prisma.recurringExpense.findFirst({ where: { id: body.id, ownerId: current.user.id } });
   if (!existing) return NextResponse.json({ error: "Recurring expense not found." }, { status: 404 });
 
   let categoryId = existing.categoryId;
+  let accountId = existing.accountId;
+  if (body.accountId) {
+    const account = await current.prisma.account.findFirst({ where: { id: body.accountId, ownerId: current.user.id, isArchived: false } });
+    if (!account) return NextResponse.json({ error: "Payment account not found." }, { status: 404 });
+    accountId = account.id;
+  }
   if (body.categoryId) {
     const category = await current.prisma.category.findFirst({ where: { id: body.categoryId, ownerId: current.user.id } });
     if (!category) return NextResponse.json({ error: "Category not found." }, { status: 404 });
@@ -74,9 +81,10 @@ export async function PATCH(request: Request) {
       ...(body.isActive !== undefined ? { isActive: body.isActive } : {}),
       ...(body.nextDueAt ? { nextDueAt: new Date(body.nextDueAt) } : {}),
       ...(body.frequency ? { frequency: body.frequency } : {}),
+      accountId,
       categoryId,
     },
-    include: { category: true },
+    include: { category: true, account: true },
   });
   return NextResponse.json({ data });
 }

@@ -238,6 +238,23 @@ export type UuidNullableWithAggregatesFilter<$PrismaModel = never> = {
   _max?: Prisma.NestedStringNullableFilter<$PrismaModel>
 }
 
+export type EnumBalanceAdjustmentTypeFilter<$PrismaModel = never> = {
+  equals?: $Enums.BalanceAdjustmentType | Prisma.EnumBalanceAdjustmentTypeFieldRefInput<$PrismaModel>
+  in?: $Enums.BalanceAdjustmentType[] | Prisma.ListEnumBalanceAdjustmentTypeFieldRefInput<$PrismaModel>
+  notIn?: $Enums.BalanceAdjustmentType[] | Prisma.ListEnumBalanceAdjustmentTypeFieldRefInput<$PrismaModel>
+  not?: Prisma.NestedEnumBalanceAdjustmentTypeFilter<$PrismaModel> | $Enums.BalanceAdjustmentType
+}
+
+export type EnumBalanceAdjustmentTypeWithAggregatesFilter<$PrismaModel = never> = {
+  equals?: $Enums.BalanceAdjustmentType | Prisma.EnumBalanceAdjustmentTypeFieldRefInput<$PrismaModel>
+  in?: $Enums.BalanceAdjustmentType[] | Prisma.ListEnumBalanceAdjustmentTypeFieldRefInput<$PrismaModel>
+  notIn?: $Enums.BalanceAdjustmentType[] | Prisma.ListEnumBalanceAdjustmentTypeFieldRefInput<$PrismaModel>
+  not?: Prisma.NestedEnumBalanceAdjustmentTypeWithAggregatesFilter<$PrismaModel> | $Enums.BalanceAdjustmentType
+  _count?: Prisma.NestedIntFilter<$PrismaModel>
+  _min?: Prisma.NestedEnumBalanceAdjustmentTypeFilter<$PrismaModel>
+  _max?: Prisma.NestedEnumBalanceAdjustmentTypeFilter<$PrismaModel>
+}
+
 export type EnumRecurringFrequencyFilter<$PrismaModel = never> = {
   equals?: $Enums.RecurringFrequency | Prisma.EnumRecurringFrequencyFieldRefInput<$PrismaModel>
   in?: $Enums.RecurringFrequency[] | Prisma.ListEnumRecurringFrequencyFieldRefInput<$PrismaModel>
@@ -589,6 +606,23 @@ export type NestedUuidNullableWithAggregatesFilter<$PrismaModel = never> = {
   _count?: Prisma.NestedIntNullableFilter<$PrismaModel>
   _min?: Prisma.NestedStringNullableFilter<$PrismaModel>
   _max?: Prisma.NestedStringNullableFilter<$PrismaModel>
+}
+
+export type NestedEnumBalanceAdjustmentTypeFilter<$PrismaModel = never> = {
+  equals?: $Enums.BalanceAdjustmentType | Prisma.EnumBalanceAdjustmentTypeFieldRefInput<$PrismaModel>
+  in?: $Enums.BalanceAdjustmentType[] | Prisma.ListEnumBalanceAdjustmentTypeFieldRefInput<$PrismaModel>
+  notIn?: $Enums.BalanceAdjustmentType[] | Prisma.ListEnumBalanceAdjustmentTypeFieldRefInput<$PrismaModel>
+  not?: Prisma.NestedEnumBalanceAdjustmentTypeFilter<$PrismaModel> | $Enums.BalanceAdjustmentType
+}
+
+export type NestedEnumBalanceAdjustmentTypeWithAggregatesFilter<$PrismaModel = never> = {
+  equals?: $Enums.BalanceAdjustmentType | Prisma.EnumBalanceAdjustmentTypeFieldRefInput<$PrismaModel>
+  in?: $Enums.BalanceAdjustmentType[] | Prisma.ListEnumBalanceAdjustmentTypeFieldRefInput<$PrismaModel>
+  notIn?: $Enums.BalanceAdjustmentType[] | Prisma.ListEnumBalanceAdjustmentTypeFieldRefInput<$PrismaModel>
+  not?: Prisma.NestedEnumBalanceAdjustmentTypeWithAggregatesFilter<$PrismaModel> | $Enums.BalanceAdjustmentType
+  _count?: Prisma.NestedIntFilter<$PrismaModel>
+  _min?: Prisma.NestedEnumBalanceAdjustmentTypeFilter<$PrismaModel>
+  _max?: Prisma.NestedEnumBalanceAdjustmentTypeFilter<$PrismaModel>
 }
 
 export type NestedEnumRecurringFrequencyFilter<$PrismaModel = never> = {

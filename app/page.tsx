@@ -95,7 +95,7 @@ export default async function Home() {
         </div>
         <div className="feature-grid">
           <article><span className="feature-icon lime"><WalletCards size={23} /></span><h3>Track every penny</h3><p>See income, expenses, and savings together without wrestling with spreadsheets.</p></article>
-          <article><span className="feature-icon lilac"><Target size={23} /></span><h3>An automatic monthly budget</h3><p>Your recorded income becomes the month’s budget, so you always know what is spent and available.</p></article>
+          <article><span className="feature-icon lilac"><Target size={23} /></span><h3>A budget you control</h3><p>Set your own monthly spending limit and always know exactly what is spent and available.</p></article>
           <article><span className="feature-icon peach"><BarChart3 size={23} /></span><h3>Reports you can read</h3><p>Understand monthly trends through simple charts built for real-life decisions.</p></article>
           <article><span className="feature-icon mint"><CalendarClock size={23} /></span><h3>Never miss a bill</h3><p>Keep recurring expenses visible and know what is coming before payday.</p></article>
         </div>

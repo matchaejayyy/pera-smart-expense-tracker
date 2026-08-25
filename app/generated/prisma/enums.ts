@@ -39,3 +39,11 @@ export const RecurringFrequency = {
 } as const
 
 export type RecurringFrequency = (typeof RecurringFrequency)[keyof typeof RecurringFrequency]
+
+
+export const BalanceAdjustmentType = {
+  ADD: 'ADD',
+  SUBTRACT: 'SUBTRACT'
+} as const
+
+export type BalanceAdjustmentType = (typeof BalanceAdjustmentType)[keyof typeof BalanceAdjustmentType]

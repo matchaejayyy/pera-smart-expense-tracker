@@ -46,6 +46,7 @@ export type TransactionMinAggregateOutputType = {
   amount: runtime.Decimal | null
   bookedAt: Date | null
   isRecurring: boolean | null
+  countsTowardBudget: boolean | null
   createdAt: Date | null
   updatedAt: Date | null
 }
@@ -62,6 +63,7 @@ export type TransactionMaxAggregateOutputType = {
   amount: runtime.Decimal | null
   bookedAt: Date | null
   isRecurring: boolean | null
+  countsTowardBudget: boolean | null
   createdAt: Date | null
   updatedAt: Date | null
 }
@@ -78,6 +80,7 @@ export type TransactionCountAggregateOutputType = {
   amount: number
   bookedAt: number
   isRecurring: number
+  countsTowardBudget: number
   createdAt: number
   updatedAt: number
   _all: number
@@ -104,6 +107,7 @@ export type TransactionMinAggregateInputType = {
   amount?: true
   bookedAt?: true
   isRecurring?: true
+  countsTowardBudget?: true
   createdAt?: true
   updatedAt?: true
 }
@@ -120,6 +124,7 @@ export type TransactionMaxAggregateInputType = {
   amount?: true
   bookedAt?: true
   isRecurring?: true
+  countsTowardBudget?: true
   createdAt?: true
   updatedAt?: true
 }
@@ -136,6 +141,7 @@ export type TransactionCountAggregateInputType = {
   amount?: true
   bookedAt?: true
   isRecurring?: true
+  countsTowardBudget?: true
   createdAt?: true
   updatedAt?: true
   _all?: true
@@ -239,6 +245,7 @@ export type TransactionGroupByOutputType = {
   amount: runtime.Decimal
   bookedAt: Date
   isRecurring: boolean
+  countsTowardBudget: boolean
   createdAt: Date
   updatedAt: Date
   _count: TransactionCountAggregateOutputType | null
@@ -278,6 +285,7 @@ export type TransactionWhereInput = {
   amount?: Prisma.DecimalFilter<"Transaction"> | runtime.Decimal | runtime.DecimalJsLike | number | string
   bookedAt?: Prisma.DateTimeFilter<"Transaction"> | Date | string
   isRecurring?: Prisma.BoolFilter<"Transaction"> | boolean
+  countsTowardBudget?: Prisma.BoolFilter<"Transaction"> | boolean
   createdAt?: Prisma.DateTimeFilter<"Transaction"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"Transaction"> | Date | string
   account?: Prisma.XOR<Prisma.AccountScalarRelationFilter, Prisma.AccountWhereInput>
@@ -297,6 +305,7 @@ export type TransactionOrderByWithRelationInput = {
   amount?: Prisma.SortOrder
   bookedAt?: Prisma.SortOrder
   isRecurring?: Prisma.SortOrder
+  countsTowardBudget?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   account?: Prisma.AccountOrderByWithRelationInput
@@ -319,6 +328,7 @@ export type TransactionWhereUniqueInput = Prisma.AtLeast<{
   amount?: Prisma.DecimalFilter<"Transaction"> | runtime.Decimal | runtime.DecimalJsLike | number | string
   bookedAt?: Prisma.DateTimeFilter<"Transaction"> | Date | string
   isRecurring?: Prisma.BoolFilter<"Transaction"> | boolean
+  countsTowardBudget?: Prisma.BoolFilter<"Transaction"> | boolean
   createdAt?: Prisma.DateTimeFilter<"Transaction"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"Transaction"> | Date | string
   account?: Prisma.XOR<Prisma.AccountScalarRelationFilter, Prisma.AccountWhereInput>
@@ -338,6 +348,7 @@ export type TransactionOrderByWithAggregationInput = {
   amount?: Prisma.SortOrder
   bookedAt?: Prisma.SortOrder
   isRecurring?: Prisma.SortOrder
+  countsTowardBudget?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   _count?: Prisma.TransactionCountOrderByAggregateInput
@@ -362,6 +373,7 @@ export type TransactionScalarWhereWithAggregatesInput = {
   amount?: Prisma.DecimalWithAggregatesFilter<"Transaction"> | runtime.Decimal | runtime.DecimalJsLike | number | string
   bookedAt?: Prisma.DateTimeWithAggregatesFilter<"Transaction"> | Date | string
   isRecurring?: Prisma.BoolWithAggregatesFilter<"Transaction"> | boolean
+  countsTowardBudget?: Prisma.BoolWithAggregatesFilter<"Transaction"> | boolean
   createdAt?: Prisma.DateTimeWithAggregatesFilter<"Transaction"> | Date | string
   updatedAt?: Prisma.DateTimeWithAggregatesFilter<"Transaction"> | Date | string
 }
@@ -375,6 +387,7 @@ export type TransactionCreateInput = {
   amount: runtime.Decimal | runtime.DecimalJsLike | number | string
   bookedAt: Date | string
   isRecurring?: boolean
+  countsTowardBudget?: boolean
   createdAt?: Date | string
   updatedAt?: Date | string
   account: Prisma.AccountCreateNestedOneWithoutTransactionsInput
@@ -394,6 +407,7 @@ export type TransactionUncheckedCreateInput = {
   amount: runtime.Decimal | runtime.DecimalJsLike | number | string
   bookedAt: Date | string
   isRecurring?: boolean
+  countsTowardBudget?: boolean
   createdAt?: Date | string
   updatedAt?: Date | string
 }
@@ -407,6 +421,7 @@ export type TransactionUpdateInput = {
   amount?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   bookedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   isRecurring?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  countsTowardBudget?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   account?: Prisma.AccountUpdateOneRequiredWithoutTransactionsNestedInput
@@ -426,6 +441,7 @@ export type TransactionUncheckedUpdateInput = {
   amount?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   bookedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   isRecurring?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  countsTowardBudget?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -442,6 +458,7 @@ export type TransactionCreateManyInput = {
   amount: runtime.Decimal | runtime.DecimalJsLike | number | string
   bookedAt: Date | string
   isRecurring?: boolean
+  countsTowardBudget?: boolean
   createdAt?: Date | string
   updatedAt?: Date | string
 }
@@ -455,6 +472,7 @@ export type TransactionUpdateManyMutationInput = {
   amount?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   bookedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   isRecurring?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  countsTowardBudget?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -471,6 +489,7 @@ export type TransactionUncheckedUpdateManyInput = {
   amount?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   bookedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   isRecurring?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  countsTowardBudget?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -497,6 +516,7 @@ export type TransactionCountOrderByAggregateInput = {
   amount?: Prisma.SortOrder
   bookedAt?: Prisma.SortOrder
   isRecurring?: Prisma.SortOrder
+  countsTowardBudget?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
 }
@@ -517,6 +537,7 @@ export type TransactionMaxOrderByAggregateInput = {
   amount?: Prisma.SortOrder
   bookedAt?: Prisma.SortOrder
   isRecurring?: Prisma.SortOrder
+  countsTowardBudget?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
 }
@@ -533,6 +554,7 @@ export type TransactionMinOrderByAggregateInput = {
   amount?: Prisma.SortOrder
   bookedAt?: Prisma.SortOrder
   isRecurring?: Prisma.SortOrder
+  countsTowardBudget?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
 }
@@ -676,6 +698,7 @@ export type TransactionCreateWithoutAccountInput = {
   amount: runtime.Decimal | runtime.DecimalJsLike | number | string
   bookedAt: Date | string
   isRecurring?: boolean
+  countsTowardBudget?: boolean
   createdAt?: Date | string
   updatedAt?: Date | string
   category?: Prisma.CategoryCreateNestedOneWithoutTransactionsInput
@@ -693,6 +716,7 @@ export type TransactionUncheckedCreateWithoutAccountInput = {
   amount: runtime.Decimal | runtime.DecimalJsLike | number | string
   bookedAt: Date | string
   isRecurring?: boolean
+  countsTowardBudget?: boolean
   createdAt?: Date | string
   updatedAt?: Date | string
 }
@@ -738,6 +762,7 @@ export type TransactionScalarWhereInput = {
   amount?: Prisma.DecimalFilter<"Transaction"> | runtime.Decimal | runtime.DecimalJsLike | number | string
   bookedAt?: Prisma.DateTimeFilter<"Transaction"> | Date | string
   isRecurring?: Prisma.BoolFilter<"Transaction"> | boolean
+  countsTowardBudget?: Prisma.BoolFilter<"Transaction"> | boolean
   createdAt?: Prisma.DateTimeFilter<"Transaction"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"Transaction"> | Date | string
 }
@@ -751,6 +776,7 @@ export type TransactionCreateWithoutCategoryInput = {
   amount: runtime.Decimal | runtime.DecimalJsLike | number | string
   bookedAt: Date | string
   isRecurring?: boolean
+  countsTowardBudget?: boolean
   createdAt?: Date | string
   updatedAt?: Date | string
   account: Prisma.AccountCreateNestedOneWithoutTransactionsInput
@@ -768,6 +794,7 @@ export type TransactionUncheckedCreateWithoutCategoryInput = {
   amount: runtime.Decimal | runtime.DecimalJsLike | number | string
   bookedAt: Date | string
   isRecurring?: boolean
+  countsTowardBudget?: boolean
   createdAt?: Date | string
   updatedAt?: Date | string
 }
@@ -807,6 +834,7 @@ export type TransactionCreateWithoutSavingsGoalInput = {
   amount: runtime.Decimal | runtime.DecimalJsLike | number | string
   bookedAt: Date | string
   isRecurring?: boolean
+  countsTowardBudget?: boolean
   createdAt?: Date | string
   updatedAt?: Date | string
   account: Prisma.AccountCreateNestedOneWithoutTransactionsInput
@@ -824,6 +852,7 @@ export type TransactionUncheckedCreateWithoutSavingsGoalInput = {
   amount: runtime.Decimal | runtime.DecimalJsLike | number | string
   bookedAt: Date | string
   isRecurring?: boolean
+  countsTowardBudget?: boolean
   createdAt?: Date | string
   updatedAt?: Date | string
 }
@@ -865,6 +894,7 @@ export type TransactionCreateManyAccountInput = {
   amount: runtime.Decimal | runtime.DecimalJsLike | number | string
   bookedAt: Date | string
   isRecurring?: boolean
+  countsTowardBudget?: boolean
   createdAt?: Date | string
   updatedAt?: Date | string
 }
@@ -878,6 +908,7 @@ export type TransactionUpdateWithoutAccountInput = {
   amount?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   bookedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   isRecurring?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  countsTowardBudget?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   category?: Prisma.CategoryUpdateOneWithoutTransactionsNestedInput
@@ -895,6 +926,7 @@ export type TransactionUncheckedUpdateWithoutAccountInput = {
   amount?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   bookedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   isRecurring?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  countsTowardBudget?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -910,6 +942,7 @@ export type TransactionUncheckedUpdateManyWithoutAccountInput = {
   amount?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   bookedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   isRecurring?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  countsTowardBudget?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -925,6 +958,7 @@ export type TransactionCreateManyCategoryInput = {
   amount: runtime.Decimal | runtime.DecimalJsLike | number | string
   bookedAt: Date | string
   isRecurring?: boolean
+  countsTowardBudget?: boolean
   createdAt?: Date | string
   updatedAt?: Date | string
 }
@@ -938,6 +972,7 @@ export type TransactionUpdateWithoutCategoryInput = {
   amount?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   bookedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   isRecurring?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  countsTowardBudget?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   account?: Prisma.AccountUpdateOneRequiredWithoutTransactionsNestedInput
@@ -955,6 +990,7 @@ export type TransactionUncheckedUpdateWithoutCategoryInput = {
   amount?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   bookedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   isRecurring?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  countsTowardBudget?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -970,6 +1006,7 @@ export type TransactionUncheckedUpdateManyWithoutCategoryInput = {
   amount?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   bookedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   isRecurring?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  countsTowardBudget?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -985,6 +1022,7 @@ export type TransactionCreateManySavingsGoalInput = {
   amount: runtime.Decimal | runtime.DecimalJsLike | number | string
   bookedAt: Date | string
   isRecurring?: boolean
+  countsTowardBudget?: boolean
   createdAt?: Date | string
   updatedAt?: Date | string
 }
@@ -998,6 +1036,7 @@ export type TransactionUpdateWithoutSavingsGoalInput = {
   amount?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   bookedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   isRecurring?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  countsTowardBudget?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   account?: Prisma.AccountUpdateOneRequiredWithoutTransactionsNestedInput
@@ -1015,6 +1054,7 @@ export type TransactionUncheckedUpdateWithoutSavingsGoalInput = {
   amount?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   bookedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   isRecurring?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  countsTowardBudget?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -1030,6 +1070,7 @@ export type TransactionUncheckedUpdateManyWithoutSavingsGoalInput = {
   amount?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   bookedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   isRecurring?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  countsTowardBudget?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -1048,6 +1089,7 @@ export type TransactionSelect<ExtArgs extends runtime.Types.Extensions.InternalA
   amount?: boolean
   bookedAt?: boolean
   isRecurring?: boolean
+  countsTowardBudget?: boolean
   createdAt?: boolean
   updatedAt?: boolean
   account?: boolean | Prisma.AccountDefaultArgs<ExtArgs>
@@ -1067,6 +1109,7 @@ export type TransactionSelectCreateManyAndReturn<ExtArgs extends runtime.Types.E
   amount?: boolean
   bookedAt?: boolean
   isRecurring?: boolean
+  countsTowardBudget?: boolean
   createdAt?: boolean
   updatedAt?: boolean
   account?: boolean | Prisma.AccountDefaultArgs<ExtArgs>
@@ -1086,6 +1129,7 @@ export type TransactionSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.E
   amount?: boolean
   bookedAt?: boolean
   isRecurring?: boolean
+  countsTowardBudget?: boolean
   createdAt?: boolean
   updatedAt?: boolean
   account?: boolean | Prisma.AccountDefaultArgs<ExtArgs>
@@ -1105,11 +1149,12 @@ export type TransactionSelectScalar = {
   amount?: boolean
   bookedAt?: boolean
   isRecurring?: boolean
+  countsTowardBudget?: boolean
   createdAt?: boolean
   updatedAt?: boolean
 }
 
-export type TransactionOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "ownerId" | "accountId" | "categoryId" | "savingsGoalId" | "type" | "merchant" | "note" | "amount" | "bookedAt" | "isRecurring" | "createdAt" | "updatedAt", ExtArgs["result"]["transaction"]>
+export type TransactionOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "ownerId" | "accountId" | "categoryId" | "savingsGoalId" | "type" | "merchant" | "note" | "amount" | "bookedAt" | "isRecurring" | "countsTowardBudget" | "createdAt" | "updatedAt", ExtArgs["result"]["transaction"]>
 export type TransactionInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   account?: boolean | Prisma.AccountDefaultArgs<ExtArgs>
   category?: boolean | Prisma.Transaction$categoryArgs<ExtArgs>
@@ -1145,6 +1190,7 @@ export type $TransactionPayload<ExtArgs extends runtime.Types.Extensions.Interna
     amount: runtime.Decimal
     bookedAt: Date
     isRecurring: boolean
+    countsTowardBudget: boolean
     createdAt: Date
     updatedAt: Date
   }, ExtArgs["result"]["transaction"]>
@@ -1584,6 +1630,7 @@ export interface TransactionFieldRefs {
   readonly amount: Prisma.FieldRef<"Transaction", 'Decimal'>
   readonly bookedAt: Prisma.FieldRef<"Transaction", 'DateTime'>
   readonly isRecurring: Prisma.FieldRef<"Transaction", 'Boolean'>
+  readonly countsTowardBudget: Prisma.FieldRef<"Transaction", 'Boolean'>
   readonly createdAt: Prisma.FieldRef<"Transaction", 'DateTime'>
   readonly updatedAt: Prisma.FieldRef<"Transaction", 'DateTime'>
 }

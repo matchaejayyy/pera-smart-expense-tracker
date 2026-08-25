@@ -55,6 +55,9 @@ export const ModelName = {
   Account: 'Account',
   Category: 'Category',
   Transaction: 'Transaction',
+  MonthlyBudget: 'MonthlyBudget',
+  AccountAdjustment: 'AccountAdjustment',
+  AccountTransfer: 'AccountTransfer',
   Budget: 'Budget',
   RecurringExpense: 'RecurringExpense',
   SavingsGoal: 'SavingsGoal',
@@ -134,11 +137,52 @@ export const TransactionScalarFieldEnum = {
   amount: 'amount',
   bookedAt: 'bookedAt',
   isRecurring: 'isRecurring',
+  countsTowardBudget: 'countsTowardBudget',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
 } as const
 
 export type TransactionScalarFieldEnum = (typeof TransactionScalarFieldEnum)[keyof typeof TransactionScalarFieldEnum]
+
+
+export const MonthlyBudgetScalarFieldEnum = {
+  id: 'id',
+  ownerId: 'ownerId',
+  month: 'month',
+  limit: 'limit',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type MonthlyBudgetScalarFieldEnum = (typeof MonthlyBudgetScalarFieldEnum)[keyof typeof MonthlyBudgetScalarFieldEnum]
+
+
+export const AccountAdjustmentScalarFieldEnum = {
+  id: 'id',
+  ownerId: 'ownerId',
+  accountId: 'accountId',
+  direction: 'direction',
+  amount: 'amount',
+  note: 'note',
+  adjustedAt: 'adjustedAt',
+  createdAt: 'createdAt'
+} as const
+
+export type AccountAdjustmentScalarFieldEnum = (typeof AccountAdjustmentScalarFieldEnum)[keyof typeof AccountAdjustmentScalarFieldEnum]
+
+
+export const AccountTransferScalarFieldEnum = {
+  id: 'id',
+  ownerId: 'ownerId',
+  fromAccountId: 'fromAccountId',
+  toAccountId: 'toAccountId',
+  amount: 'amount',
+  note: 'note',
+  transferredAt: 'transferredAt',
+  createdAt: 'createdAt'
+} as const
+
+export type AccountTransferScalarFieldEnum = (typeof AccountTransferScalarFieldEnum)[keyof typeof AccountTransferScalarFieldEnum]
 
 
 export const BudgetScalarFieldEnum = {

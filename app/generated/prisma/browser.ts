@@ -38,6 +38,21 @@ export type Category = Prisma.CategoryModel
  */
 export type Transaction = Prisma.TransactionModel
 /**
+ * Model MonthlyBudget
+ * 
+ */
+export type MonthlyBudget = Prisma.MonthlyBudgetModel
+/**
+ * Model AccountAdjustment
+ * 
+ */
+export type AccountAdjustment = Prisma.AccountAdjustmentModel
+/**
+ * Model AccountTransfer
+ * 
+ */
+export type AccountTransfer = Prisma.AccountTransferModel
+/**
  * Model Budget
  * 
  */

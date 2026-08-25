@@ -4,9 +4,10 @@ Pera is a responsive personal-finance dashboard built with Next.js, TypeScript, 
 
 ## Included
 
-- Income, expense, savings, and balance tracking
+- Manual Cash, bank, e-wallet, savings, and credit-card accounts
+- Account-aware income, expense, savings, transfer, and balance-adjustment tracking
 - Interactive cash-flow and category reports
-- Automatic monthly budget based on recorded income
+- User-defined monthly spending limits with optional per-expense inclusion
 - Recurring expense scheduling and pause/resume controls
 - Smart spending tips plus an optional external provider endpoint
 - Responsive desktop sidebar and mobile bottom navigation

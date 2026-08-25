@@ -26,9 +26,9 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
         <div className="auth-story-copy">
           <p className="landing-kicker"><Sparkles size={14} />A clearer money routine</p>
           <h1>Know where your money goes—and where it can take you.</h1>
-          <p>One secure account keeps your transactions, automatic monthly budget, recurring bills, and savings goals together.</p>
+          <p>One secure account keeps your wallets, transactions, monthly budget, recurring bills, and savings goals together.</p>
           <div className="auth-benefits">
-            <span><Check size={15} />A monthly budget based on your income</span>
+            <span><Check size={15} />A monthly spending limit set by you</span>
             <span><Check size={15} />Spending reports you can understand</span>
             <span><Check size={15} />Practical tips based on your activity</span>
           </div>
