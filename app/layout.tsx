@@ -23,7 +23,7 @@ export async function generateMetadata(): Promise<Metadata> {
     applicationName: "Pera",
     manifest: "/manifest.webmanifest",
     icons: { icon: "/pera-icon-192.png", apple: "/pera-icon-192.png" },
-    appleWebApp: { capable: true, statusBarStyle: "black-translucent", title: "Pera" },
+    appleWebApp: { capable: true, statusBarStyle: "default", title: "Pera" },
     openGraph: { title, description, type: "website", images: [{ url: new URL("/og.png", metadataBase), width: 1672, height: 941, alt: "Pera smart expense and budget tracker" }] },
     twitter: { card: "summary_large_image", title, description, images: [new URL("/og.png", metadataBase)] },
   };
