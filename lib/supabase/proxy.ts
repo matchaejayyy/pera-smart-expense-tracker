@@ -56,9 +56,5 @@ export async function updateSession(request: NextRequest) {
     return copySessionCookies(response, NextResponse.redirect(loginUrl));
   }
 
-  if (isAuthenticated && request.method === "GET" && (pathname === "/" || pathname === "/login")) {
-    return copySessionCookies(response, NextResponse.redirect(new URL("/dashboard", request.url)));
-  }
-
   return response;
 }

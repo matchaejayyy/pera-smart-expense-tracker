@@ -87,7 +87,8 @@ test("keeps the Pera product, CRUD flows, account controls, RLS, and standard Ne
   assert.match(landing, /Spend with purpose\. Save with <span>ease<\/span>\./);
   assert.match(landing, /Track every penny/);
   assert.doesNotMatch(landing, /Make every peso feel|Track every peso/);
-  assert.match(landing, /getClaims/);
+  assert.match(landing, /getUser/);
+  assert.doesNotMatch(landing, /getClaims/);
   assert.match(landing, /redirect\("\/dashboard"\)/);
   assert.match(login, /signInWithOAuth/);
   assert.match(login, /provider: "google"/);
@@ -123,6 +124,7 @@ test("keeps the Pera product, CRUD flows, account controls, RLS, and standard Ne
   assert.match(recurringApi, /id: body\.accountId/);
   assert.match(authProxy, /getClaims/);
   assert.match(authProxy, /claims\?\.sub/);
+  assert.doesNotMatch(authProxy, /pathname === "\/" \|\| pathname === "\/login"/);
   assert.match(authProxy, /isProtectedPage/);
   assert.match(authProxy, /isProtectedApi/);
   assert.match(smartTipsApi, /getClaims/);

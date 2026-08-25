@@ -19,8 +19,8 @@ export const dynamic = "force-dynamic";
 export default async function Home() {
   const supabase = await createClient();
   if (supabase) {
-    const { data, error } = await supabase.auth.getClaims();
-    if (!error && data?.claims?.sub) redirect("/dashboard");
+    const { data: { user }, error } = await supabase.auth.getUser();
+    if (!error && user) redirect("/dashboard");
   }
 
   return (
