@@ -1,5 +1,12 @@
-const CACHE_NAME = "pera-shell-v1";
-const OFFLINE_ASSETS = ["/offline", "/pera-icon.svg", "/pera-icon-192.png", "/pera-icon-512.png", "/google-logo.svg"];
+const CACHE_NAME = "pera-shell-v2";
+const OFFLINE_ASSETS = [
+  "/offline",
+  "/pera-icon-180.png",
+  "/pera-icon-192.png",
+  "/pera-icon-512.png",
+  "/pera-icon-1024.png",
+  "/google-logo.svg",
+];
 
 self.addEventListener("install", (event) => {
   event.waitUntil(caches.open(CACHE_NAME).then((cache) => cache.addAll(OFFLINE_ASSETS)).then(() => self.skipWaiting()));
