@@ -63,6 +63,11 @@ export type Budget = Prisma.BudgetModel
  */
 export type RecurringExpense = Prisma.RecurringExpenseModel
 /**
+ * Model RecurringOccurrence
+ * 
+ */
+export type RecurringOccurrence = Prisma.RecurringOccurrenceModel
+/**
  * Model SavingsGoal
  * 
  */

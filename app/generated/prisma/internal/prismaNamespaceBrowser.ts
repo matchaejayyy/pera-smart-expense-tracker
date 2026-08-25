@@ -60,6 +60,7 @@ export const ModelName = {
   AccountTransfer: 'AccountTransfer',
   Budget: 'Budget',
   RecurringExpense: 'RecurringExpense',
+  RecurringOccurrence: 'RecurringOccurrence',
   SavingsGoal: 'SavingsGoal',
   Insight: 'Insight'
 } as const
@@ -207,12 +208,28 @@ export const RecurringExpenseScalarFieldEnum = {
   amount: 'amount',
   frequency: 'frequency',
   nextDueAt: 'nextDueAt',
+  scheduleDay: 'scheduleDay',
   isActive: 'isActive',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
 } as const
 
 export type RecurringExpenseScalarFieldEnum = (typeof RecurringExpenseScalarFieldEnum)[keyof typeof RecurringExpenseScalarFieldEnum]
+
+
+export const RecurringOccurrenceScalarFieldEnum = {
+  id: 'id',
+  ownerId: 'ownerId',
+  recurringExpenseId: 'recurringExpenseId',
+  accountId: 'accountId',
+  transactionId: 'transactionId',
+  scheduledFor: 'scheduledFor',
+  status: 'status',
+  paidAt: 'paidAt',
+  createdAt: 'createdAt'
+} as const
+
+export type RecurringOccurrenceScalarFieldEnum = (typeof RecurringOccurrenceScalarFieldEnum)[keyof typeof RecurringOccurrenceScalarFieldEnum]
 
 
 export const SavingsGoalScalarFieldEnum = {

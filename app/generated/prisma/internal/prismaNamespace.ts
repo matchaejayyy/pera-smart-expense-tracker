@@ -406,6 +406,7 @@ export const ModelName = {
   AccountTransfer: 'AccountTransfer',
   Budget: 'Budget',
   RecurringExpense: 'RecurringExpense',
+  RecurringOccurrence: 'RecurringOccurrence',
   SavingsGoal: 'SavingsGoal',
   Insight: 'Insight'
 } as const
@@ -423,7 +424,7 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
     omit: GlobalOmitOptions
   }
   meta: {
-    modelProps: "profile" | "account" | "category" | "transaction" | "monthlyBudget" | "accountAdjustment" | "accountTransfer" | "budget" | "recurringExpense" | "savingsGoal" | "insight"
+    modelProps: "profile" | "account" | "category" | "transaction" | "monthlyBudget" | "accountAdjustment" | "accountTransfer" | "budget" | "recurringExpense" | "recurringOccurrence" | "savingsGoal" | "insight"
     txIsolationLevel: TransactionIsolationLevel
   }
   model: {
@@ -1093,6 +1094,80 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         }
       }
     }
+    RecurringOccurrence: {
+      payload: Prisma.$RecurringOccurrencePayload<ExtArgs>
+      fields: Prisma.RecurringOccurrenceFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.RecurringOccurrenceFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$RecurringOccurrencePayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.RecurringOccurrenceFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$RecurringOccurrencePayload>
+        }
+        findFirst: {
+          args: Prisma.RecurringOccurrenceFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$RecurringOccurrencePayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.RecurringOccurrenceFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$RecurringOccurrencePayload>
+        }
+        findMany: {
+          args: Prisma.RecurringOccurrenceFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$RecurringOccurrencePayload>[]
+        }
+        create: {
+          args: Prisma.RecurringOccurrenceCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$RecurringOccurrencePayload>
+        }
+        createMany: {
+          args: Prisma.RecurringOccurrenceCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.RecurringOccurrenceCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$RecurringOccurrencePayload>[]
+        }
+        delete: {
+          args: Prisma.RecurringOccurrenceDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$RecurringOccurrencePayload>
+        }
+        update: {
+          args: Prisma.RecurringOccurrenceUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$RecurringOccurrencePayload>
+        }
+        deleteMany: {
+          args: Prisma.RecurringOccurrenceDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.RecurringOccurrenceUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.RecurringOccurrenceUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$RecurringOccurrencePayload>[]
+        }
+        upsert: {
+          args: Prisma.RecurringOccurrenceUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$RecurringOccurrencePayload>
+        }
+        aggregate: {
+          args: Prisma.RecurringOccurrenceAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateRecurringOccurrence>
+        }
+        groupBy: {
+          args: Prisma.RecurringOccurrenceGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.RecurringOccurrenceGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.RecurringOccurrenceCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.RecurringOccurrenceCountAggregateOutputType> | number
+        }
+      }
+    }
     SavingsGoal: {
       payload: Prisma.$SavingsGoalPayload<ExtArgs>
       fields: Prisma.SavingsGoalFieldRefs
@@ -1407,12 +1482,28 @@ export const RecurringExpenseScalarFieldEnum = {
   amount: 'amount',
   frequency: 'frequency',
   nextDueAt: 'nextDueAt',
+  scheduleDay: 'scheduleDay',
   isActive: 'isActive',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
 } as const
 
 export type RecurringExpenseScalarFieldEnum = (typeof RecurringExpenseScalarFieldEnum)[keyof typeof RecurringExpenseScalarFieldEnum]
+
+
+export const RecurringOccurrenceScalarFieldEnum = {
+  id: 'id',
+  ownerId: 'ownerId',
+  recurringExpenseId: 'recurringExpenseId',
+  accountId: 'accountId',
+  transactionId: 'transactionId',
+  scheduledFor: 'scheduledFor',
+  status: 'status',
+  paidAt: 'paidAt',
+  createdAt: 'createdAt'
+} as const
+
+export type RecurringOccurrenceScalarFieldEnum = (typeof RecurringOccurrenceScalarFieldEnum)[keyof typeof RecurringOccurrenceScalarFieldEnum]
 
 
 export const SavingsGoalScalarFieldEnum = {
@@ -1598,6 +1689,34 @@ export type ListEnumRecurringFrequencyFieldRefInput<$PrismaModel> = FieldRefInpu
 
 
 /**
+ * Reference to a field of type 'Int'
+ */
+export type IntFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Int'>
+    
+
+
+/**
+ * Reference to a field of type 'Int[]'
+ */
+export type ListIntFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Int[]'>
+    
+
+
+/**
+ * Reference to a field of type 'RecurringOccurrenceStatus'
+ */
+export type EnumRecurringOccurrenceStatusFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'RecurringOccurrenceStatus'>
+    
+
+
+/**
+ * Reference to a field of type 'RecurringOccurrenceStatus[]'
+ */
+export type ListEnumRecurringOccurrenceStatusFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'RecurringOccurrenceStatus[]'>
+    
+
+
+/**
  * Reference to a field of type 'Json'
  */
 export type JsonFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Json'>
@@ -1612,16 +1731,16 @@ export type EnumQueryModeFieldRefInput<$PrismaModel> = FieldRefInputType<$Prisma
 
 
 /**
- * Reference to a field of type 'Int'
+ * Reference to a field of type 'Float'
  */
-export type IntFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Int'>
+export type FloatFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Float'>
     
 
 
 /**
- * Reference to a field of type 'Int[]'
+ * Reference to a field of type 'Float[]'
  */
-export type ListIntFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Int[]'>
+export type ListFloatFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Float[]'>
     
 
 /**
@@ -1784,6 +1903,7 @@ export type GlobalOmitConfig = {
   accountTransfer?: Prisma.AccountTransferOmit
   budget?: Prisma.BudgetOmit
   recurringExpense?: Prisma.RecurringExpenseOmit
+  recurringOccurrence?: Prisma.RecurringOccurrenceOmit
   savingsGoal?: Prisma.SavingsGoalOmit
   insight?: Prisma.InsightOmit
 }

@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { getPrisma } from "../../../lib/prisma";
+import { advanceToCurrentOrFuture, dateOnly } from "../../../lib/recurring-schedule";
 import { createClient } from "../../../lib/supabase/server";
 
 async function context() {
@@ -29,7 +30,9 @@ export async function POST(request: Request) {
     nextDueAt?: string;
     frequency?: "WEEKLY" | "BIWEEKLY" | "MONTHLY" | "QUARTERLY" | "YEARLY";
   };
-  if (!body.name || !body.accountId || !body.categoryId || !body.amount || !body.nextDueAt) return NextResponse.json({ error: "Name, payment account, category, amount, and next due date are required." }, { status: 400 });
+  const amount = Number(body.amount);
+  const nextDueAt = body.nextDueAt ? dateOnly(body.nextDueAt) : null;
+  if (!body.name?.trim() || !body.accountId || !body.categoryId || !Number.isFinite(amount) || amount <= 0 || !nextDueAt || Number.isNaN(nextDueAt.getTime())) return NextResponse.json({ error: "Name, payment account, category, amount, and next due date are required." }, { status: 400 });
 
   const account = await current.prisma.account.findFirst({ where: { id: body.accountId, ownerId: current.user.id, isArchived: false } });
   if (!account) return NextResponse.json({ error: "Payment account not found." }, { status: 404 });
@@ -42,9 +45,10 @@ export async function POST(request: Request) {
       ownerId: current.user.id,
       accountId: account.id,
       categoryId: category.id,
-      name: body.name,
-      amount: body.amount,
-      nextDueAt: new Date(body.nextDueAt),
+      name: body.name.trim(),
+      amount,
+      nextDueAt,
+      scheduleDay: nextDueAt.getUTCDate(),
       frequency: body.frequency ?? "MONTHLY",
     },
     include: { category: true, account: true },
@@ -73,13 +77,22 @@ export async function PATCH(request: Request) {
     categoryId = category.id;
   }
 
+  const requestedDue = body.nextDueAt ? dateOnly(body.nextDueAt) : null;
+  if (requestedDue && Number.isNaN(requestedDue.getTime())) return NextResponse.json({ error: "Enter a valid next due date." }, { status: 400 });
+  if (body.amount !== undefined && (!Number.isFinite(Number(body.amount)) || Number(body.amount) <= 0)) return NextResponse.json({ error: "Enter an amount greater than zero." }, { status: 400 });
+  const frequency = body.frequency ?? existing.frequency;
+  const scheduleDay = requestedDue?.getUTCDate() ?? existing.scheduleDay;
+  const nextDueAt = body.isActive === true && !existing.isActive && !requestedDue
+    ? advanceToCurrentOrFuture(existing.nextDueAt, frequency, scheduleDay)
+    : requestedDue;
+
   const data = await current.prisma.recurringExpense.update({
     where: { id: existing.id },
     data: {
-      ...(body.name !== undefined ? { name: body.name } : {}),
-      ...(body.amount !== undefined ? { amount: body.amount } : {}),
+      ...(body.name !== undefined ? { name: body.name.trim() } : {}),
+      ...(body.amount !== undefined ? { amount: Number(body.amount) } : {}),
       ...(body.isActive !== undefined ? { isActive: body.isActive } : {}),
-      ...(body.nextDueAt ? { nextDueAt: new Date(body.nextDueAt) } : {}),
+      ...(nextDueAt ? { nextDueAt, scheduleDay } : {}),
       ...(body.frequency ? { frequency: body.frequency } : {}),
       accountId,
       categoryId,

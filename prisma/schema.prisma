@@ -35,6 +35,11 @@ enum BalanceAdjustmentType {
   SUBTRACT
 }
 
+enum RecurringOccurrenceStatus {
+  PAID
+  SKIPPED
+}
+
 model Profile {
   id                   String   @id @db.Uuid
   displayName          String?
@@ -51,20 +56,21 @@ model Profile {
 }
 
 model Account {
-  id                String              @id @default(uuid()) @db.Uuid
-  ownerId           String              @db.Uuid
-  name              String
-  type              AccountType
-  currency          String              @default("PHP")
-  openingBalance    Decimal             @default(0) @db.Decimal(14, 2)
-  isArchived        Boolean             @default(false)
-  transactions      Transaction[]
-  recurring         RecurringExpense[]
-  adjustments       AccountAdjustment[]
-  outgoingTransfers AccountTransfer[]   @relation("OutgoingTransfers")
-  incomingTransfers AccountTransfer[]   @relation("IncomingTransfers")
-  createdAt         DateTime            @default(now())
-  updatedAt         DateTime            @updatedAt
+  id                   String                @id @default(uuid()) @db.Uuid
+  ownerId              String                @db.Uuid
+  name                 String
+  type                 AccountType
+  currency             String                @default("PHP")
+  openingBalance       Decimal               @default(0) @db.Decimal(14, 2)
+  isArchived           Boolean               @default(false)
+  transactions         Transaction[]
+  recurring            RecurringExpense[]
+  adjustments          AccountAdjustment[]
+  outgoingTransfers    AccountTransfer[]     @relation("OutgoingTransfers")
+  incomingTransfers    AccountTransfer[]     @relation("IncomingTransfers")
+  recurringOccurrences RecurringOccurrence[]
+  createdAt            DateTime              @default(now())
+  updatedAt            DateTime              @updatedAt
 
   @@index([ownerId, isArchived])
   @@map("accounts")
@@ -89,23 +95,24 @@ model Category {
 }
 
 model Transaction {
-  id                 String          @id @default(uuid()) @db.Uuid
-  ownerId            String          @db.Uuid
-  accountId          String          @db.Uuid
-  categoryId         String?         @db.Uuid
-  savingsGoalId      String?         @db.Uuid
-  type               TransactionType
-  merchant           String
-  note               String?
-  amount             Decimal         @db.Decimal(14, 2)
-  bookedAt           DateTime
-  isRecurring        Boolean         @default(false)
-  countsTowardBudget Boolean         @default(true)
-  account            Account         @relation(fields: [accountId], references: [id], onDelete: Cascade)
-  category           Category?       @relation(fields: [categoryId], references: [id], onDelete: SetNull)
-  savingsGoal        SavingsGoal?    @relation(fields: [savingsGoalId], references: [id], onDelete: SetNull)
-  createdAt          DateTime        @default(now())
-  updatedAt          DateTime        @updatedAt
+  id                  String               @id @default(uuid()) @db.Uuid
+  ownerId             String               @db.Uuid
+  accountId           String               @db.Uuid
+  categoryId          String?              @db.Uuid
+  savingsGoalId       String?              @db.Uuid
+  type                TransactionType
+  merchant            String
+  note                String?
+  amount              Decimal              @db.Decimal(14, 2)
+  bookedAt            DateTime
+  isRecurring         Boolean              @default(false)
+  countsTowardBudget  Boolean              @default(true)
+  account             Account              @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  category            Category?            @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+  savingsGoal         SavingsGoal?         @relation(fields: [savingsGoalId], references: [id], onDelete: SetNull)
+  recurringOccurrence RecurringOccurrence?
+  createdAt           DateTime             @default(now())
+  updatedAt           DateTime             @updatedAt
 
   @@index([ownerId, bookedAt(sort: Desc)])
   @@index([accountId])
@@ -177,22 +184,44 @@ model Budget {
 }
 
 model RecurringExpense {
-  id         String             @id @default(uuid()) @db.Uuid
-  ownerId    String             @db.Uuid
-  accountId  String             @db.Uuid
-  categoryId String?            @db.Uuid
-  name       String
-  amount     Decimal            @db.Decimal(14, 2)
-  frequency  RecurringFrequency @default(MONTHLY)
-  nextDueAt  DateTime
-  isActive   Boolean            @default(true)
-  account    Account            @relation(fields: [accountId], references: [id], onDelete: Cascade)
-  category   Category?          @relation(fields: [categoryId], references: [id], onDelete: SetNull)
-  createdAt  DateTime           @default(now())
-  updatedAt  DateTime           @updatedAt
+  id          String                @id @default(uuid()) @db.Uuid
+  ownerId     String                @db.Uuid
+  accountId   String                @db.Uuid
+  categoryId  String?               @db.Uuid
+  name        String
+  amount      Decimal               @db.Decimal(14, 2)
+  frequency   RecurringFrequency    @default(MONTHLY)
+  nextDueAt   DateTime
+  scheduleDay Int
+  isActive    Boolean               @default(true)
+  account     Account               @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  category    Category?             @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+  occurrences RecurringOccurrence[]
+  createdAt   DateTime              @default(now())
+  updatedAt   DateTime              @updatedAt
 
   @@index([ownerId, nextDueAt])
   @@map("recurring_expenses")
+}
+
+model RecurringOccurrence {
+  id                 String                    @id @default(uuid()) @db.Uuid
+  ownerId            String                    @db.Uuid
+  recurringExpenseId String                    @db.Uuid
+  accountId          String?                   @db.Uuid
+  transactionId      String?                   @unique @db.Uuid
+  scheduledFor       DateTime                  @db.Date
+  status             RecurringOccurrenceStatus
+  paidAt             DateTime?
+  recurringExpense   RecurringExpense          @relation(fields: [recurringExpenseId], references: [id], onDelete: Cascade)
+  account            Account?                  @relation(fields: [accountId], references: [id], onDelete: Restrict)
+  transaction        Transaction?              @relation(fields: [transactionId], references: [id], onDelete: SetNull)
+  createdAt          DateTime                  @default(now())
+
+  @@unique([recurringExpenseId, scheduledFor])
+  @@index([ownerId, scheduledFor])
+  @@index([accountId])
+  @@map("recurring_occurrences")
 }
 
 model SavingsGoal {

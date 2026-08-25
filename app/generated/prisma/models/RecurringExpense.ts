@@ -28,10 +28,12 @@ export type AggregateRecurringExpense = {
 
 export type RecurringExpenseAvgAggregateOutputType = {
   amount: runtime.Decimal | null
+  scheduleDay: number | null
 }
 
 export type RecurringExpenseSumAggregateOutputType = {
   amount: runtime.Decimal | null
+  scheduleDay: number | null
 }
 
 export type RecurringExpenseMinAggregateOutputType = {
@@ -43,6 +45,7 @@ export type RecurringExpenseMinAggregateOutputType = {
   amount: runtime.Decimal | null
   frequency: $Enums.RecurringFrequency | null
   nextDueAt: Date | null
+  scheduleDay: number | null
   isActive: boolean | null
   createdAt: Date | null
   updatedAt: Date | null
@@ -57,6 +60,7 @@ export type RecurringExpenseMaxAggregateOutputType = {
   amount: runtime.Decimal | null
   frequency: $Enums.RecurringFrequency | null
   nextDueAt: Date | null
+  scheduleDay: number | null
   isActive: boolean | null
   createdAt: Date | null
   updatedAt: Date | null
@@ -71,6 +75,7 @@ export type RecurringExpenseCountAggregateOutputType = {
   amount: number
   frequency: number
   nextDueAt: number
+  scheduleDay: number
   isActive: number
   createdAt: number
   updatedAt: number
@@ -80,10 +85,12 @@ export type RecurringExpenseCountAggregateOutputType = {
 
 export type RecurringExpenseAvgAggregateInputType = {
   amount?: true
+  scheduleDay?: true
 }
 
 export type RecurringExpenseSumAggregateInputType = {
   amount?: true
+  scheduleDay?: true
 }
 
 export type RecurringExpenseMinAggregateInputType = {
@@ -95,6 +102,7 @@ export type RecurringExpenseMinAggregateInputType = {
   amount?: true
   frequency?: true
   nextDueAt?: true
+  scheduleDay?: true
   isActive?: true
   createdAt?: true
   updatedAt?: true
@@ -109,6 +117,7 @@ export type RecurringExpenseMaxAggregateInputType = {
   amount?: true
   frequency?: true
   nextDueAt?: true
+  scheduleDay?: true
   isActive?: true
   createdAt?: true
   updatedAt?: true
@@ -123,6 +132,7 @@ export type RecurringExpenseCountAggregateInputType = {
   amount?: true
   frequency?: true
   nextDueAt?: true
+  scheduleDay?: true
   isActive?: true
   createdAt?: true
   updatedAt?: true
@@ -224,6 +234,7 @@ export type RecurringExpenseGroupByOutputType = {
   amount: runtime.Decimal
   frequency: $Enums.RecurringFrequency
   nextDueAt: Date
+  scheduleDay: number
   isActive: boolean
   createdAt: Date
   updatedAt: Date
@@ -261,11 +272,13 @@ export type RecurringExpenseWhereInput = {
   amount?: Prisma.DecimalFilter<"RecurringExpense"> | runtime.Decimal | runtime.DecimalJsLike | number | string
   frequency?: Prisma.EnumRecurringFrequencyFilter<"RecurringExpense"> | $Enums.RecurringFrequency
   nextDueAt?: Prisma.DateTimeFilter<"RecurringExpense"> | Date | string
+  scheduleDay?: Prisma.IntFilter<"RecurringExpense"> | number
   isActive?: Prisma.BoolFilter<"RecurringExpense"> | boolean
   createdAt?: Prisma.DateTimeFilter<"RecurringExpense"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"RecurringExpense"> | Date | string
   account?: Prisma.XOR<Prisma.AccountScalarRelationFilter, Prisma.AccountWhereInput>
   category?: Prisma.XOR<Prisma.CategoryNullableScalarRelationFilter, Prisma.CategoryWhereInput> | null
+  occurrences?: Prisma.RecurringOccurrenceListRelationFilter
 }
 
 export type RecurringExpenseOrderByWithRelationInput = {
@@ -277,11 +290,13 @@ export type RecurringExpenseOrderByWithRelationInput = {
   amount?: Prisma.SortOrder
   frequency?: Prisma.SortOrder
   nextDueAt?: Prisma.SortOrder
+  scheduleDay?: Prisma.SortOrder
   isActive?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   account?: Prisma.AccountOrderByWithRelationInput
   category?: Prisma.CategoryOrderByWithRelationInput
+  occurrences?: Prisma.RecurringOccurrenceOrderByRelationAggregateInput
 }
 
 export type RecurringExpenseWhereUniqueInput = Prisma.AtLeast<{
@@ -296,11 +311,13 @@ export type RecurringExpenseWhereUniqueInput = Prisma.AtLeast<{
   amount?: Prisma.DecimalFilter<"RecurringExpense"> | runtime.Decimal | runtime.DecimalJsLike | number | string
   frequency?: Prisma.EnumRecurringFrequencyFilter<"RecurringExpense"> | $Enums.RecurringFrequency
   nextDueAt?: Prisma.DateTimeFilter<"RecurringExpense"> | Date | string
+  scheduleDay?: Prisma.IntFilter<"RecurringExpense"> | number
   isActive?: Prisma.BoolFilter<"RecurringExpense"> | boolean
   createdAt?: Prisma.DateTimeFilter<"RecurringExpense"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"RecurringExpense"> | Date | string
   account?: Prisma.XOR<Prisma.AccountScalarRelationFilter, Prisma.AccountWhereInput>
   category?: Prisma.XOR<Prisma.CategoryNullableScalarRelationFilter, Prisma.CategoryWhereInput> | null
+  occurrences?: Prisma.RecurringOccurrenceListRelationFilter
 }, "id">
 
 export type RecurringExpenseOrderByWithAggregationInput = {
@@ -312,6 +329,7 @@ export type RecurringExpenseOrderByWithAggregationInput = {
   amount?: Prisma.SortOrder
   frequency?: Prisma.SortOrder
   nextDueAt?: Prisma.SortOrder
+  scheduleDay?: Prisma.SortOrder
   isActive?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
@@ -334,6 +352,7 @@ export type RecurringExpenseScalarWhereWithAggregatesInput = {
   amount?: Prisma.DecimalWithAggregatesFilter<"RecurringExpense"> | runtime.Decimal | runtime.DecimalJsLike | number | string
   frequency?: Prisma.EnumRecurringFrequencyWithAggregatesFilter<"RecurringExpense"> | $Enums.RecurringFrequency
   nextDueAt?: Prisma.DateTimeWithAggregatesFilter<"RecurringExpense"> | Date | string
+  scheduleDay?: Prisma.IntWithAggregatesFilter<"RecurringExpense"> | number
   isActive?: Prisma.BoolWithAggregatesFilter<"RecurringExpense"> | boolean
   createdAt?: Prisma.DateTimeWithAggregatesFilter<"RecurringExpense"> | Date | string
   updatedAt?: Prisma.DateTimeWithAggregatesFilter<"RecurringExpense"> | Date | string
@@ -346,11 +365,13 @@ export type RecurringExpenseCreateInput = {
   amount: runtime.Decimal | runtime.DecimalJsLike | number | string
   frequency?: $Enums.RecurringFrequency
   nextDueAt: Date | string
+  scheduleDay: number
   isActive?: boolean
   createdAt?: Date | string
   updatedAt?: Date | string
   account: Prisma.AccountCreateNestedOneWithoutRecurringInput
   category?: Prisma.CategoryCreateNestedOneWithoutRecurringInput
+  occurrences?: Prisma.RecurringOccurrenceCreateNestedManyWithoutRecurringExpenseInput
 }
 
 export type RecurringExpenseUncheckedCreateInput = {
@@ -362,9 +383,11 @@ export type RecurringExpenseUncheckedCreateInput = {
   amount: runtime.Decimal | runtime.DecimalJsLike | number | string
   frequency?: $Enums.RecurringFrequency
   nextDueAt: Date | string
+  scheduleDay: number
   isActive?: boolean
   createdAt?: Date | string
   updatedAt?: Date | string
+  occurrences?: Prisma.RecurringOccurrenceUncheckedCreateNestedManyWithoutRecurringExpenseInput
 }
 
 export type RecurringExpenseUpdateInput = {
@@ -374,11 +397,13 @@ export type RecurringExpenseUpdateInput = {
   amount?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   frequency?: Prisma.EnumRecurringFrequencyFieldUpdateOperationsInput | $Enums.RecurringFrequency
   nextDueAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  scheduleDay?: Prisma.IntFieldUpdateOperationsInput | number
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   account?: Prisma.AccountUpdateOneRequiredWithoutRecurringNestedInput
   category?: Prisma.CategoryUpdateOneWithoutRecurringNestedInput
+  occurrences?: Prisma.RecurringOccurrenceUpdateManyWithoutRecurringExpenseNestedInput
 }
 
 export type RecurringExpenseUncheckedUpdateInput = {
@@ -390,9 +415,11 @@ export type RecurringExpenseUncheckedUpdateInput = {
   amount?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   frequency?: Prisma.EnumRecurringFrequencyFieldUpdateOperationsInput | $Enums.RecurringFrequency
   nextDueAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  scheduleDay?: Prisma.IntFieldUpdateOperationsInput | number
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  occurrences?: Prisma.RecurringOccurrenceUncheckedUpdateManyWithoutRecurringExpenseNestedInput
 }
 
 export type RecurringExpenseCreateManyInput = {
@@ -404,6 +431,7 @@ export type RecurringExpenseCreateManyInput = {
   amount: runtime.Decimal | runtime.DecimalJsLike | number | string
   frequency?: $Enums.RecurringFrequency
   nextDueAt: Date | string
+  scheduleDay: number
   isActive?: boolean
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -416,6 +444,7 @@ export type RecurringExpenseUpdateManyMutationInput = {
   amount?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   frequency?: Prisma.EnumRecurringFrequencyFieldUpdateOperationsInput | $Enums.RecurringFrequency
   nextDueAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  scheduleDay?: Prisma.IntFieldUpdateOperationsInput | number
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -430,6 +459,7 @@ export type RecurringExpenseUncheckedUpdateManyInput = {
   amount?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   frequency?: Prisma.EnumRecurringFrequencyFieldUpdateOperationsInput | $Enums.RecurringFrequency
   nextDueAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  scheduleDay?: Prisma.IntFieldUpdateOperationsInput | number
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -454,6 +484,7 @@ export type RecurringExpenseCountOrderByAggregateInput = {
   amount?: Prisma.SortOrder
   frequency?: Prisma.SortOrder
   nextDueAt?: Prisma.SortOrder
+  scheduleDay?: Prisma.SortOrder
   isActive?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
@@ -461,6 +492,7 @@ export type RecurringExpenseCountOrderByAggregateInput = {
 
 export type RecurringExpenseAvgOrderByAggregateInput = {
   amount?: Prisma.SortOrder
+  scheduleDay?: Prisma.SortOrder
 }
 
 export type RecurringExpenseMaxOrderByAggregateInput = {
@@ -472,6 +504,7 @@ export type RecurringExpenseMaxOrderByAggregateInput = {
   amount?: Prisma.SortOrder
   frequency?: Prisma.SortOrder
   nextDueAt?: Prisma.SortOrder
+  scheduleDay?: Prisma.SortOrder
   isActive?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
@@ -486,6 +519,7 @@ export type RecurringExpenseMinOrderByAggregateInput = {
   amount?: Prisma.SortOrder
   frequency?: Prisma.SortOrder
   nextDueAt?: Prisma.SortOrder
+  scheduleDay?: Prisma.SortOrder
   isActive?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
@@ -493,6 +527,12 @@ export type RecurringExpenseMinOrderByAggregateInput = {
 
 export type RecurringExpenseSumOrderByAggregateInput = {
   amount?: Prisma.SortOrder
+  scheduleDay?: Prisma.SortOrder
+}
+
+export type RecurringExpenseScalarRelationFilter = {
+  is?: Prisma.RecurringExpenseWhereInput
+  isNot?: Prisma.RecurringExpenseWhereInput
 }
 
 export type RecurringExpenseCreateNestedManyWithoutAccountInput = {
@@ -583,6 +623,28 @@ export type EnumRecurringFrequencyFieldUpdateOperationsInput = {
   set?: $Enums.RecurringFrequency
 }
 
+export type IntFieldUpdateOperationsInput = {
+  set?: number
+  increment?: number
+  decrement?: number
+  multiply?: number
+  divide?: number
+}
+
+export type RecurringExpenseCreateNestedOneWithoutOccurrencesInput = {
+  create?: Prisma.XOR<Prisma.RecurringExpenseCreateWithoutOccurrencesInput, Prisma.RecurringExpenseUncheckedCreateWithoutOccurrencesInput>
+  connectOrCreate?: Prisma.RecurringExpenseCreateOrConnectWithoutOccurrencesInput
+  connect?: Prisma.RecurringExpenseWhereUniqueInput
+}
+
+export type RecurringExpenseUpdateOneRequiredWithoutOccurrencesNestedInput = {
+  create?: Prisma.XOR<Prisma.RecurringExpenseCreateWithoutOccurrencesInput, Prisma.RecurringExpenseUncheckedCreateWithoutOccurrencesInput>
+  connectOrCreate?: Prisma.RecurringExpenseCreateOrConnectWithoutOccurrencesInput
+  upsert?: Prisma.RecurringExpenseUpsertWithoutOccurrencesInput
+  connect?: Prisma.RecurringExpenseWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.RecurringExpenseUpdateToOneWithWhereWithoutOccurrencesInput, Prisma.RecurringExpenseUpdateWithoutOccurrencesInput>, Prisma.RecurringExpenseUncheckedUpdateWithoutOccurrencesInput>
+}
+
 export type RecurringExpenseCreateWithoutAccountInput = {
   id?: string
   ownerId: string
@@ -590,10 +652,12 @@ export type RecurringExpenseCreateWithoutAccountInput = {
   amount: runtime.Decimal | runtime.DecimalJsLike | number | string
   frequency?: $Enums.RecurringFrequency
   nextDueAt: Date | string
+  scheduleDay: number
   isActive?: boolean
   createdAt?: Date | string
   updatedAt?: Date | string
   category?: Prisma.CategoryCreateNestedOneWithoutRecurringInput
+  occurrences?: Prisma.RecurringOccurrenceCreateNestedManyWithoutRecurringExpenseInput
 }
 
 export type RecurringExpenseUncheckedCreateWithoutAccountInput = {
@@ -604,9 +668,11 @@ export type RecurringExpenseUncheckedCreateWithoutAccountInput = {
   amount: runtime.Decimal | runtime.DecimalJsLike | number | string
   frequency?: $Enums.RecurringFrequency
   nextDueAt: Date | string
+  scheduleDay: number
   isActive?: boolean
   createdAt?: Date | string
   updatedAt?: Date | string
+  occurrences?: Prisma.RecurringOccurrenceUncheckedCreateNestedManyWithoutRecurringExpenseInput
 }
 
 export type RecurringExpenseCreateOrConnectWithoutAccountInput = {
@@ -647,6 +713,7 @@ export type RecurringExpenseScalarWhereInput = {
   amount?: Prisma.DecimalFilter<"RecurringExpense"> | runtime.Decimal | runtime.DecimalJsLike | number | string
   frequency?: Prisma.EnumRecurringFrequencyFilter<"RecurringExpense"> | $Enums.RecurringFrequency
   nextDueAt?: Prisma.DateTimeFilter<"RecurringExpense"> | Date | string
+  scheduleDay?: Prisma.IntFilter<"RecurringExpense"> | number
   isActive?: Prisma.BoolFilter<"RecurringExpense"> | boolean
   createdAt?: Prisma.DateTimeFilter<"RecurringExpense"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"RecurringExpense"> | Date | string
@@ -659,10 +726,12 @@ export type RecurringExpenseCreateWithoutCategoryInput = {
   amount: runtime.Decimal | runtime.DecimalJsLike | number | string
   frequency?: $Enums.RecurringFrequency
   nextDueAt: Date | string
+  scheduleDay: number
   isActive?: boolean
   createdAt?: Date | string
   updatedAt?: Date | string
   account: Prisma.AccountCreateNestedOneWithoutRecurringInput
+  occurrences?: Prisma.RecurringOccurrenceCreateNestedManyWithoutRecurringExpenseInput
 }
 
 export type RecurringExpenseUncheckedCreateWithoutCategoryInput = {
@@ -673,9 +742,11 @@ export type RecurringExpenseUncheckedCreateWithoutCategoryInput = {
   amount: runtime.Decimal | runtime.DecimalJsLike | number | string
   frequency?: $Enums.RecurringFrequency
   nextDueAt: Date | string
+  scheduleDay: number
   isActive?: boolean
   createdAt?: Date | string
   updatedAt?: Date | string
+  occurrences?: Prisma.RecurringOccurrenceUncheckedCreateNestedManyWithoutRecurringExpenseInput
 }
 
 export type RecurringExpenseCreateOrConnectWithoutCategoryInput = {
@@ -704,6 +775,82 @@ export type RecurringExpenseUpdateManyWithWhereWithoutCategoryInput = {
   data: Prisma.XOR<Prisma.RecurringExpenseUpdateManyMutationInput, Prisma.RecurringExpenseUncheckedUpdateManyWithoutCategoryInput>
 }
 
+export type RecurringExpenseCreateWithoutOccurrencesInput = {
+  id?: string
+  ownerId: string
+  name: string
+  amount: runtime.Decimal | runtime.DecimalJsLike | number | string
+  frequency?: $Enums.RecurringFrequency
+  nextDueAt: Date | string
+  scheduleDay: number
+  isActive?: boolean
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  account: Prisma.AccountCreateNestedOneWithoutRecurringInput
+  category?: Prisma.CategoryCreateNestedOneWithoutRecurringInput
+}
+
+export type RecurringExpenseUncheckedCreateWithoutOccurrencesInput = {
+  id?: string
+  ownerId: string
+  accountId: string
+  categoryId?: string | null
+  name: string
+  amount: runtime.Decimal | runtime.DecimalJsLike | number | string
+  frequency?: $Enums.RecurringFrequency
+  nextDueAt: Date | string
+  scheduleDay: number
+  isActive?: boolean
+  createdAt?: Date | string
+  updatedAt?: Date | string
+}
+
+export type RecurringExpenseCreateOrConnectWithoutOccurrencesInput = {
+  where: Prisma.RecurringExpenseWhereUniqueInput
+  create: Prisma.XOR<Prisma.RecurringExpenseCreateWithoutOccurrencesInput, Prisma.RecurringExpenseUncheckedCreateWithoutOccurrencesInput>
+}
+
+export type RecurringExpenseUpsertWithoutOccurrencesInput = {
+  update: Prisma.XOR<Prisma.RecurringExpenseUpdateWithoutOccurrencesInput, Prisma.RecurringExpenseUncheckedUpdateWithoutOccurrencesInput>
+  create: Prisma.XOR<Prisma.RecurringExpenseCreateWithoutOccurrencesInput, Prisma.RecurringExpenseUncheckedCreateWithoutOccurrencesInput>
+  where?: Prisma.RecurringExpenseWhereInput
+}
+
+export type RecurringExpenseUpdateToOneWithWhereWithoutOccurrencesInput = {
+  where?: Prisma.RecurringExpenseWhereInput
+  data: Prisma.XOR<Prisma.RecurringExpenseUpdateWithoutOccurrencesInput, Prisma.RecurringExpenseUncheckedUpdateWithoutOccurrencesInput>
+}
+
+export type RecurringExpenseUpdateWithoutOccurrencesInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  ownerId?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  amount?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  frequency?: Prisma.EnumRecurringFrequencyFieldUpdateOperationsInput | $Enums.RecurringFrequency
+  nextDueAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  scheduleDay?: Prisma.IntFieldUpdateOperationsInput | number
+  isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  account?: Prisma.AccountUpdateOneRequiredWithoutRecurringNestedInput
+  category?: Prisma.CategoryUpdateOneWithoutRecurringNestedInput
+}
+
+export type RecurringExpenseUncheckedUpdateWithoutOccurrencesInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  ownerId?: Prisma.StringFieldUpdateOperationsInput | string
+  accountId?: Prisma.StringFieldUpdateOperationsInput | string
+  categoryId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  amount?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  frequency?: Prisma.EnumRecurringFrequencyFieldUpdateOperationsInput | $Enums.RecurringFrequency
+  nextDueAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  scheduleDay?: Prisma.IntFieldUpdateOperationsInput | number
+  isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+}
+
 export type RecurringExpenseCreateManyAccountInput = {
   id?: string
   ownerId: string
@@ -712,6 +859,7 @@ export type RecurringExpenseCreateManyAccountInput = {
   amount: runtime.Decimal | runtime.DecimalJsLike | number | string
   frequency?: $Enums.RecurringFrequency
   nextDueAt: Date | string
+  scheduleDay: number
   isActive?: boolean
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -724,10 +872,12 @@ export type RecurringExpenseUpdateWithoutAccountInput = {
   amount?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   frequency?: Prisma.EnumRecurringFrequencyFieldUpdateOperationsInput | $Enums.RecurringFrequency
   nextDueAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  scheduleDay?: Prisma.IntFieldUpdateOperationsInput | number
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   category?: Prisma.CategoryUpdateOneWithoutRecurringNestedInput
+  occurrences?: Prisma.RecurringOccurrenceUpdateManyWithoutRecurringExpenseNestedInput
 }
 
 export type RecurringExpenseUncheckedUpdateWithoutAccountInput = {
@@ -738,9 +888,11 @@ export type RecurringExpenseUncheckedUpdateWithoutAccountInput = {
   amount?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   frequency?: Prisma.EnumRecurringFrequencyFieldUpdateOperationsInput | $Enums.RecurringFrequency
   nextDueAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  scheduleDay?: Prisma.IntFieldUpdateOperationsInput | number
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  occurrences?: Prisma.RecurringOccurrenceUncheckedUpdateManyWithoutRecurringExpenseNestedInput
 }
 
 export type RecurringExpenseUncheckedUpdateManyWithoutAccountInput = {
@@ -751,6 +903,7 @@ export type RecurringExpenseUncheckedUpdateManyWithoutAccountInput = {
   amount?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   frequency?: Prisma.EnumRecurringFrequencyFieldUpdateOperationsInput | $Enums.RecurringFrequency
   nextDueAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  scheduleDay?: Prisma.IntFieldUpdateOperationsInput | number
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -764,6 +917,7 @@ export type RecurringExpenseCreateManyCategoryInput = {
   amount: runtime.Decimal | runtime.DecimalJsLike | number | string
   frequency?: $Enums.RecurringFrequency
   nextDueAt: Date | string
+  scheduleDay: number
   isActive?: boolean
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -776,10 +930,12 @@ export type RecurringExpenseUpdateWithoutCategoryInput = {
   amount?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   frequency?: Prisma.EnumRecurringFrequencyFieldUpdateOperationsInput | $Enums.RecurringFrequency
   nextDueAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  scheduleDay?: Prisma.IntFieldUpdateOperationsInput | number
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   account?: Prisma.AccountUpdateOneRequiredWithoutRecurringNestedInput
+  occurrences?: Prisma.RecurringOccurrenceUpdateManyWithoutRecurringExpenseNestedInput
 }
 
 export type RecurringExpenseUncheckedUpdateWithoutCategoryInput = {
@@ -790,9 +946,11 @@ export type RecurringExpenseUncheckedUpdateWithoutCategoryInput = {
   amount?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   frequency?: Prisma.EnumRecurringFrequencyFieldUpdateOperationsInput | $Enums.RecurringFrequency
   nextDueAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  scheduleDay?: Prisma.IntFieldUpdateOperationsInput | number
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  occurrences?: Prisma.RecurringOccurrenceUncheckedUpdateManyWithoutRecurringExpenseNestedInput
 }
 
 export type RecurringExpenseUncheckedUpdateManyWithoutCategoryInput = {
@@ -803,11 +961,41 @@ export type RecurringExpenseUncheckedUpdateManyWithoutCategoryInput = {
   amount?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   frequency?: Prisma.EnumRecurringFrequencyFieldUpdateOperationsInput | $Enums.RecurringFrequency
   nextDueAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  scheduleDay?: Prisma.IntFieldUpdateOperationsInput | number
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
+
+/**
+ * Count Type RecurringExpenseCountOutputType
+ */
+
+export type RecurringExpenseCountOutputType = {
+  occurrences: number
+}
+
+export type RecurringExpenseCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  occurrences?: boolean | RecurringExpenseCountOutputTypeCountOccurrencesArgs
+}
+
+/**
+ * RecurringExpenseCountOutputType without action
+ */
+export type RecurringExpenseCountOutputTypeDefaultArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the RecurringExpenseCountOutputType
+   */
+  select?: Prisma.RecurringExpenseCountOutputTypeSelect<ExtArgs> | null
+}
+
+/**
+ * RecurringExpenseCountOutputType without action
+ */
+export type RecurringExpenseCountOutputTypeCountOccurrencesArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.RecurringOccurrenceWhereInput
+}
 
 
 export type RecurringExpenseSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
@@ -819,11 +1007,14 @@ export type RecurringExpenseSelect<ExtArgs extends runtime.Types.Extensions.Inte
   amount?: boolean
   frequency?: boolean
   nextDueAt?: boolean
+  scheduleDay?: boolean
   isActive?: boolean
   createdAt?: boolean
   updatedAt?: boolean
   account?: boolean | Prisma.AccountDefaultArgs<ExtArgs>
   category?: boolean | Prisma.RecurringExpense$categoryArgs<ExtArgs>
+  occurrences?: boolean | Prisma.RecurringExpense$occurrencesArgs<ExtArgs>
+  _count?: boolean | Prisma.RecurringExpenseCountOutputTypeDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["recurringExpense"]>
 
 export type RecurringExpenseSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
@@ -835,6 +1026,7 @@ export type RecurringExpenseSelectCreateManyAndReturn<ExtArgs extends runtime.Ty
   amount?: boolean
   frequency?: boolean
   nextDueAt?: boolean
+  scheduleDay?: boolean
   isActive?: boolean
   createdAt?: boolean
   updatedAt?: boolean
@@ -851,6 +1043,7 @@ export type RecurringExpenseSelectUpdateManyAndReturn<ExtArgs extends runtime.Ty
   amount?: boolean
   frequency?: boolean
   nextDueAt?: boolean
+  scheduleDay?: boolean
   isActive?: boolean
   createdAt?: boolean
   updatedAt?: boolean
@@ -867,15 +1060,18 @@ export type RecurringExpenseSelectScalar = {
   amount?: boolean
   frequency?: boolean
   nextDueAt?: boolean
+  scheduleDay?: boolean
   isActive?: boolean
   createdAt?: boolean
   updatedAt?: boolean
 }
 
-export type RecurringExpenseOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "ownerId" | "accountId" | "categoryId" | "name" | "amount" | "frequency" | "nextDueAt" | "isActive" | "createdAt" | "updatedAt", ExtArgs["result"]["recurringExpense"]>
+export type RecurringExpenseOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "ownerId" | "accountId" | "categoryId" | "name" | "amount" | "frequency" | "nextDueAt" | "scheduleDay" | "isActive" | "createdAt" | "updatedAt", ExtArgs["result"]["recurringExpense"]>
 export type RecurringExpenseInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   account?: boolean | Prisma.AccountDefaultArgs<ExtArgs>
   category?: boolean | Prisma.RecurringExpense$categoryArgs<ExtArgs>
+  occurrences?: boolean | Prisma.RecurringExpense$occurrencesArgs<ExtArgs>
+  _count?: boolean | Prisma.RecurringExpenseCountOutputTypeDefaultArgs<ExtArgs>
 }
 export type RecurringExpenseIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   account?: boolean | Prisma.AccountDefaultArgs<ExtArgs>
@@ -891,6 +1087,7 @@ export type $RecurringExpensePayload<ExtArgs extends runtime.Types.Extensions.In
   objects: {
     account: Prisma.$AccountPayload<ExtArgs>
     category: Prisma.$CategoryPayload<ExtArgs> | null
+    occurrences: Prisma.$RecurringOccurrencePayload<ExtArgs>[]
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: string
@@ -901,6 +1098,7 @@ export type $RecurringExpensePayload<ExtArgs extends runtime.Types.Extensions.In
     amount: runtime.Decimal
     frequency: $Enums.RecurringFrequency
     nextDueAt: Date
+    scheduleDay: number
     isActive: boolean
     createdAt: Date
     updatedAt: Date
@@ -1300,6 +1498,7 @@ export interface Prisma__RecurringExpenseClient<T, Null = never, ExtArgs extends
   readonly [Symbol.toStringTag]: "PrismaPromise"
   account<T extends Prisma.AccountDefaultArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.AccountDefaultArgs<ExtArgs>>): Prisma.Prisma__AccountClient<runtime.Types.Result.GetResult<Prisma.$AccountPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
   category<T extends Prisma.RecurringExpense$categoryArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.RecurringExpense$categoryArgs<ExtArgs>>): Prisma.Prisma__CategoryClient<runtime.Types.Result.GetResult<Prisma.$CategoryPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+  occurrences<T extends Prisma.RecurringExpense$occurrencesArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.RecurringExpense$occurrencesArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$RecurringOccurrencePayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
    * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -1337,6 +1536,7 @@ export interface RecurringExpenseFieldRefs {
   readonly amount: Prisma.FieldRef<"RecurringExpense", 'Decimal'>
   readonly frequency: Prisma.FieldRef<"RecurringExpense", 'RecurringFrequency'>
   readonly nextDueAt: Prisma.FieldRef<"RecurringExpense", 'DateTime'>
+  readonly scheduleDay: Prisma.FieldRef<"RecurringExpense", 'Int'>
   readonly isActive: Prisma.FieldRef<"RecurringExpense", 'Boolean'>
   readonly createdAt: Prisma.FieldRef<"RecurringExpense", 'DateTime'>
   readonly updatedAt: Prisma.FieldRef<"RecurringExpense", 'DateTime'>
@@ -1757,6 +1957,30 @@ export type RecurringExpense$categoryArgs<ExtArgs extends runtime.Types.Extensio
    */
   include?: Prisma.CategoryInclude<ExtArgs> | null
   where?: Prisma.CategoryWhereInput
+}
+
+/**
+ * RecurringExpense.occurrences
+ */
+export type RecurringExpense$occurrencesArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the RecurringOccurrence
+   */
+  select?: Prisma.RecurringOccurrenceSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the RecurringOccurrence
+   */
+  omit?: Prisma.RecurringOccurrenceOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.RecurringOccurrenceInclude<ExtArgs> | null
+  where?: Prisma.RecurringOccurrenceWhereInput
+  orderBy?: Prisma.RecurringOccurrenceOrderByWithRelationInput | Prisma.RecurringOccurrenceOrderByWithRelationInput[]
+  cursor?: Prisma.RecurringOccurrenceWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.RecurringOccurrenceScalarFieldEnum | Prisma.RecurringOccurrenceScalarFieldEnum[]
 }
 
 /**

@@ -47,3 +47,11 @@ export const BalanceAdjustmentType = {
 } as const
 
 export type BalanceAdjustmentType = (typeof BalanceAdjustmentType)[keyof typeof BalanceAdjustmentType]
+
+
+export const RecurringOccurrenceStatus = {
+  PAID: 'PAID',
+  SKIPPED: 'SKIPPED'
+} as const
+
+export type RecurringOccurrenceStatus = (typeof RecurringOccurrenceStatus)[keyof typeof RecurringOccurrenceStatus]

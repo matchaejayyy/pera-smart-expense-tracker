@@ -64,7 +64,7 @@ type SavingsGoal = { id: string; name: string; targetAmount: number | null; curr
 type SmartTip = { kind: string; title: string; body: string };
 type DashboardSettings = { displayName: string; monthlyTarget: number; budgetAlerts: boolean };
 type DeleteTarget = { kind: "transaction" | "recurring" | "category" | "savings" | "account"; id: string; name: string };
-type SaveAction = "transaction" | "recurring" | "category" | "savings" | "account" | "account-action" | "budget" | "delete" | "settings" | "transfer" | "recurring-toggle" | "smart-rule" | "tips";
+type SaveAction = "transaction" | "recurring" | "recurring-payment" | "recurring-skip" | "category" | "savings" | "account" | "account-action" | "budget" | "delete" | "settings" | "transfer" | "recurring-toggle" | "smart-rule" | "tips";
 type TransactionRecord = { id: string; merchant: string; accountId: string; account: { name: string }; categoryId: string | null; savingsGoalId: string | null; category?: { name: string } | null; savingsGoal?: { name: string } | null; bookedAt: string; amount: string; type: TransactionType; countsTowardBudget: boolean };
 type RecurringRecord = { id: string; name: string; accountId: string; account: { name: string }; categoryId: string | null; category?: { name: string } | null; amount: string; nextDueAt: string; isActive: boolean; frequency: string };
 type AccountRecord = { id: string; name: string; type: AccountType; openingBalance: string; balance: number };
@@ -189,6 +189,9 @@ export function Dashboard({ userName, userEmail }: DashboardProps) {
   const [transactionDraftType, setTransactionDraftType] = useState<TransactionType>("EXPENSE");
   const [recurringModal, setRecurringModal] = useState(false);
   const [recurringEditing, setRecurringEditing] = useState<RecurringItem | null>(null);
+  const [recurringPayment, setRecurringPayment] = useState<RecurringItem | null>(null);
+  const [recurringPaymentStep, setRecurringPaymentStep] = useState<"ASK" | "PAY">("ASK");
+  const [dismissedDuePrompts, setDismissedDuePrompts] = useState<string[]>([]);
   const [categoryModal, setCategoryModal] = useState(false);
   const [categoryEditing, setCategoryEditing] = useState<Category | null>(null);
   const [savingsModal, setSavingsModal] = useState(false);
@@ -209,6 +212,7 @@ export function Dashboard({ userName, userEmail }: DashboardProps) {
   const [toast, setToast] = useState<string | null>(null);
   const [smartRule, setSmartRule] = useState(false);
   const [notificationsRead, setNotificationsRead] = useState(false);
+  const [notificationPermission, setNotificationPermission] = useState<NotificationPermission>("default");
   const [tipsLoading, setTipsLoading] = useState(false);
   const [savingAction, setSavingAction] = useState<SaveAction | null>(null);
   const saveLock = useRef(false);
@@ -233,6 +237,13 @@ export function Dashboard({ userName, userEmail }: DashboardProps) {
       window.clearTimeout(syncTimer);
       window.removeEventListener("hashchange", onHashChange);
     };
+  }, []);
+
+  useEffect(() => {
+    const timer = window.setTimeout(() => {
+      if ("Notification" in window) setNotificationPermission(Notification.permission);
+    }, 0);
+    return () => window.clearTimeout(timer);
   }, []);
 
   useEffect(() => {
@@ -313,6 +324,11 @@ export function Dashboard({ userName, userEmail }: DashboardProps) {
       setTransactionEditing(null);
       setRecurringModal(false);
       setRecurringEditing(null);
+      if (recurringPayment) {
+        setDismissedDuePrompts((items) => [...new Set([...items, `${recurringPayment.id}:${recurringPayment.nextDueAt}`])]);
+        setRecurringPayment(null);
+        setRecurringPaymentStep("ASK");
+      }
       setCategoryModal(false);
       setCategoryEditing(null);
       setSavingsModal(false);
@@ -328,7 +344,29 @@ export function Dashboard({ userName, userEmail }: DashboardProps) {
     };
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
-  }, []);
+  }, [recurringPayment]);
+
+  useEffect(() => {
+    if (dataMode !== "live" || recurringPayment || transactionModal || recurringModal || categoryModal || savingsModal || accountModal || accountAction || budgetModal || deleteTarget || transferModal || settingsModal || notificationsModal) return;
+    const due = recurring.find((item) => item.active && daysUntilDate(item.nextDueAt) <= 0 && !dismissedDuePrompts.includes(`${item.id}:${item.nextDueAt}`));
+    if (!due) return;
+    const timer = window.setTimeout(() => {
+      setRecurringPayment(due);
+      setRecurringPaymentStep("ASK");
+    }, 0);
+    return () => window.clearTimeout(timer);
+  }, [accountAction, accountModal, budgetModal, categoryModal, dataMode, deleteTarget, dismissedDuePrompts, notificationsModal, recurring, recurringModal, recurringPayment, savingsModal, settingsModal, transactionModal, transferModal]);
+
+  useEffect(() => {
+    if (!recurringPayment || notificationPermission !== "granted" || !("serviceWorker" in navigator)) return;
+    void navigator.serviceWorker.ready.then((registration) => registration.showNotification(`${recurringPayment.name} is due`, {
+      body: `${exactCurrency(recurringPayment.amount)} was scheduled for ${recurringPayment.due}. Open Pera to confirm it.`,
+      icon: "/pera-icon-192.png",
+      badge: "/pera-icon-192.png",
+      tag: `recurring-${recurringPayment.id}-${recurringPayment.nextDueAt}`,
+      data: { url: "/dashboard#recurring" },
+    })).catch(() => undefined);
+  }, [notificationPermission, recurringPayment]);
 
   const monthlyTransactions = useMemo(() => {
     const now = new Date();
@@ -627,6 +665,98 @@ export function Dashboard({ userName, userEmail }: DashboardProps) {
     });
   };
 
+  const dismissRecurringPayment = () => {
+    if (recurringPayment) setDismissedDuePrompts((items) => [...new Set([...items, `${recurringPayment.id}:${recurringPayment.nextDueAt}`])]);
+    setRecurringPayment(null);
+    setRecurringPaymentStep("ASK");
+  };
+
+  const applyRecurringAdvance = (item: RecurringItem, result: Record<string, unknown>) => {
+    const updated = result.recurring;
+    if (!updated || typeof updated !== "object" || !("nextDueAt" in updated) || typeof updated.nextDueAt !== "string") return null;
+    const nextDueAt = updated.nextDueAt.slice(0, 10);
+    setRecurring((items) => items.map((entry) => entry.id === item.id ? { ...entry, nextDueAt, due: displayDate(nextDueAt) } : entry));
+    return nextDueAt;
+  };
+
+  const skipRecurringPayment = async () => {
+    if (!recurringPayment) return;
+    const item = recurringPayment;
+    await runSave("recurring-skip", async () => {
+      const result = await syncMutation("/api/recurring/confirm", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ recurringId: item.id, action: "SKIPPED" }),
+      });
+      if (!result) return;
+      const nextDueAt = applyRecurringAdvance(item, result);
+      setRecurringPayment(null);
+      setRecurringPaymentStep("ASK");
+      setNotificationsRead(false);
+      notify(nextDueAt ? `${item.name} was skipped. Next due ${displayDate(nextDueAt)}.` : `${item.name} was skipped.`);
+    });
+  };
+
+  const saveRecurringPayment = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    if (!recurringPayment) return;
+    const item = recurringPayment;
+    const form = event.currentTarget;
+    await runSave("recurring-payment", async () => {
+      const data = new FormData(form);
+      const accountId = String(data.get("accountId") ?? "");
+      const account = accounts.find((entry) => entry.id === accountId);
+      const amount = Number(data.get("amount"));
+      const paidAt = String(data.get("paidAt"));
+      const countsTowardBudget = data.get("countsTowardBudget") === "on";
+      if (!account) {
+        notify("Choose the account used for this payment.");
+        return;
+      }
+      const result = await syncMutation("/api/recurring/confirm", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ recurringId: item.id, action: "PAID", accountId, amount, paidAt, countsTowardBudget }),
+      });
+      if (!result) return;
+      const created = result.transaction;
+      if (created && typeof created === "object" && "id" in created && typeof created.id === "string") {
+        const transactionId = created.id;
+        setTransactions((items) => [{
+          id: transactionId,
+          merchant: item.name,
+          accountId,
+          account: account.name,
+          categoryId: item.categoryId,
+          savingsGoalId: null,
+          category: item.category,
+          date: `${displayDate(paidAt)} · Just now`,
+          bookedAt: paidAt,
+          amount,
+          type: "EXPENSE",
+          countsTowardBudget,
+          tone: "peach",
+        }, ...items]);
+      }
+      const nextDueAt = applyRecurringAdvance(item, result);
+      await refreshAccounts();
+      setRecurringPayment(null);
+      setRecurringPaymentStep("ASK");
+      setNotificationsRead(false);
+      notify(nextDueAt ? `${item.name} was paid. Next due ${displayDate(nextDueAt)}.` : `${item.name} was marked paid.`);
+    });
+  };
+
+  const enableDeviceNotifications = async () => {
+    if (!("Notification" in window)) {
+      notify("Device notifications are not supported in this browser.");
+      return;
+    }
+    const permission = await Notification.requestPermission();
+    setNotificationPermission(permission);
+    notify(permission === "granted" ? "Device reminders enabled" : "Device reminders were not enabled");
+  };
+
   const saveCategory = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     const form = event.currentTarget;
@@ -664,7 +794,9 @@ export function Dashboard({ userName, userEmail }: DashboardProps) {
     await runSave("recurring-toggle", async () => {
       const result = await syncMutation("/api/recurring", { method: "PATCH", headers: { "content-type": "application/json" }, body: JSON.stringify({ id: item.id, isActive: !item.active }) });
       if (!result) return;
-      setRecurring((items) => items.map((entry) => entry.id === id ? { ...entry, active: !entry.active } : entry));
+      const nextDueAt = typeof result.nextDueAt === "string" ? result.nextDueAt.slice(0, 10) : item.nextDueAt;
+      setRecurring((items) => items.map((entry) => entry.id === id ? { ...entry, active: !entry.active, nextDueAt, due: displayDate(nextDueAt) } : entry));
+      if (item.active && recurringPayment?.id === item.id) dismissRecurringPayment();
       notify(`${item.name} ${item.active ? "paused" : "resumed"}`);
     });
   };
@@ -840,9 +972,10 @@ export function Dashboard({ userName, userEmail }: DashboardProps) {
 
   const recurringNotificationItems = activeRecurring.flatMap((item) => {
     const daysUntilDue = daysUntilDate(item.nextDueAt);
-    if (![10, 1, 0].includes(daysUntilDue)) return [];
+    if (![10, 1, 0].includes(daysUntilDue) && daysUntilDue > 0) return [];
     const timing = daysUntilDue === 10 ? "in 10 days" : daysUntilDue === 1 ? "tomorrow" : "today";
-    return [{ key: `recurring-${item.id}-${daysUntilDue}`, title: `${item.name} is due ${timing}`, body: `${currency(item.amount)} is scheduled for ${item.due}.` }];
+    const title = daysUntilDue < 0 ? `${item.name} is ${Math.abs(daysUntilDue)} day${Math.abs(daysUntilDue) === 1 ? "" : "s"} overdue` : `${item.name} is due ${timing}`;
+    return [{ key: `recurring-${item.id}-${daysUntilDue}`, title, body: `${currency(item.amount)} is scheduled for ${item.due}.` }];
   });
 
   const notificationItems = [
@@ -893,7 +1026,7 @@ export function Dashboard({ userName, userEmail }: DashboardProps) {
 
         {activePage === "Savings" && <section className="savings-page"><article className="savings-summary-panel"><div><p className="eyebrow">Your savings portfolio</p><h2>{currency(savedAcrossGoals)} saved</h2><p>Build flexible destinations for emergencies, personal plans, travel, or anything important to you.</p></div><div className="savings-summary-progress"><span><strong>{savingsGoals.length}</strong><small>active goal{savingsGoals.length === 1 ? "" : "s"}</small></span><span><strong>{savingsTargets ? `${Math.round(savedTowardTargets / savingsTargets * 100)}%` : "Flexible"}</strong><small>{savingsTargets ? "of all targets" : "targets are optional"}</small></span></div><button className="savings-add-button" disabled={!dataReady} onClick={() => { setSavingsEditing(null); setSavingsModal(true); }}><Plus size={17} />Create savings goal</button></article><div className="savings-goal-grid">{savingsGoals.map((goal) => { const progress = goal.targetAmount ? Math.min(100, Math.round(goal.currentAmount / goal.targetAmount * 100)) : 0; return <article className="savings-goal-card" key={goal.id}><div className="savings-goal-head"><span className="savings-goal-icon" style={{ background: goal.color }}><PiggyBank size={20} /></span><div className="row-actions"><button onClick={() => { setSavingsEditing(goal); setSavingsModal(true); }} aria-label={`Edit ${goal.name}`}><Pencil size={14} /></button><button className="danger" onClick={() => setDeleteTarget({ kind: "savings", id: goal.id, name: goal.name })} aria-label={`Delete ${goal.name}`}><Trash2 size={14} /></button></div></div><p className="eyebrow">Savings destination</p><h2>{goal.name}</h2><strong className="savings-goal-amount">{currency(goal.currentAmount)}</strong><span className="savings-goal-target">{goal.targetAmount ? `of ${currency(goal.targetAmount)} target` : "No target amount"}</span><div className={`savings-goal-progress${goal.targetAmount ? "" : " no-target"}`}><i style={{ width: `${progress}%`, background: goal.color }} /></div><div className="savings-goal-foot"><span>{goal.targetAmount ? `${progress}% complete` : "Flexible savings"}</span><span>{goal.targetDate ? `Target ${new Date(`${goal.targetDate}T12:00:00`).toLocaleDateString("en-PH", { month: "short", year: "numeric" })}` : "No deadline"}</span></div></article>; })}{savingsGoals.length === 0 && <article className="savings-empty"><span><PiggyBank size={28} /></span><h2>Create your first savings destination</h2><p>Name it anything you want—Personal Savings, Emergency Fund, Travel, or another goal.</p><button disabled={!dataReady} onClick={() => { setSavingsEditing(null); setSavingsModal(true); }}><Plus size={16} />Create savings goal</button></article>}</div></section>}
 
-        {activePage === "Recurring" && <section className="page-grid recurring-page"><article className="panel wide-panel"><div className="panel-title-row"><div><p className="eyebrow">Payment calendar</p><h2>Payment schedule</h2></div><button className="secondary-button" disabled={!dataReady || accounts.length === 0} onClick={() => { setRecurringEditing(null); setRecurringModal(true); }}><Plus size={15} />Add recurring</button></div><div className="recurring-list">{recurring.map((item) => <div className="recurring-item" key={item.id}><div className="due-chip"><CalendarClock size={15} /><span><small>Due</small><strong>{item.due}</strong></span></div><MerchantIcon label={item.name} tone={item.tone} /><span className="transaction-main"><strong>{item.name}</strong><small>{item.category} · {frequencyLabel[item.frequency]} · {item.account}</small></span><strong>{currency(item.amount)}</strong><span className="row-actions recurring-actions"><button onClick={() => { setRecurringEditing(item); setRecurringModal(true); }} aria-label={`Edit ${item.name}`}><Pencil size={14} /></button><button className="danger" onClick={() => setDeleteTarget({ kind: "recurring", id: item.id, name: item.name })} aria-label={`Delete ${item.name}`}><Trash2 size={14} /></button></span><button className={item.active ? "toggle active" : "toggle"} disabled={savingAction !== null} onClick={() => toggleRecurring(item.id)} aria-label={`${item.active ? "Pause" : "Resume"} ${item.name}`} aria-pressed={item.active}><i /></button></div>)}{recurring.length === 0 && <p className="empty-state">Add your first recurring expense to build a payment schedule.</p>}</div></article><aside className="panel upcoming-total"><p className="eyebrow">Next cycle</p><h2>Recurring total</h2><strong>{currency(recurringTotal)}</strong><div className="upcoming-visual"><Repeat2 size={40} /><span>{activeRecurring.length} payment{activeRecurring.length === 1 ? "" : "s"}<br />scheduled</span></div><p>That&apos;s {totals.income ? (recurringTotal / totals.income * 100).toFixed(1) : "0.0"}% of your monthly income.</p></aside></section>}
+        {activePage === "Recurring" && <section className="page-grid recurring-page"><article className="panel wide-panel"><div className="panel-title-row"><div><p className="eyebrow">Payment calendar</p><h2>Payment schedule</h2></div><button className="secondary-button" disabled={!dataReady || accounts.length === 0} onClick={() => { setRecurringEditing(null); setRecurringModal(true); }}><Plus size={15} />Add recurring</button></div><div className="recurring-list">{recurring.map((item) => <div className="recurring-item" key={item.id}><div className={`due-chip${item.active && daysUntilDate(item.nextDueAt) <= 0 ? " overdue" : ""}`}><CalendarClock size={15} /><span><small>{item.active && daysUntilDate(item.nextDueAt) < 0 ? "Overdue" : "Due"}</small><strong>{item.due}</strong></span></div><MerchantIcon label={item.name} tone={item.tone} /><span className="transaction-main"><strong>{item.name}</strong><small>{item.category} · {frequencyLabel[item.frequency]} · {item.account}</small></span><strong>{currency(item.amount)}</strong>{item.active && daysUntilDate(item.nextDueAt) <= 0 && <button className="due-action" disabled={savingAction !== null} onClick={() => { setRecurringPayment(item); setRecurringPaymentStep("ASK"); }}>Confirm payment</button>}<span className="row-actions recurring-actions"><button onClick={() => { setRecurringEditing(item); setRecurringModal(true); }} aria-label={`Edit ${item.name}`}><Pencil size={14} /></button><button className="danger" onClick={() => setDeleteTarget({ kind: "recurring", id: item.id, name: item.name })} aria-label={`Delete ${item.name}`}><Trash2 size={14} /></button></span><button className={item.active ? "toggle active" : "toggle"} disabled={savingAction !== null} onClick={() => toggleRecurring(item.id)} aria-label={`${item.active ? "Pause" : "Resume"} ${item.name}`} aria-pressed={item.active}><i /></button></div>)}{recurring.length === 0 && <p className="empty-state">Add your first recurring expense to build a payment schedule.</p>}</div></article><aside className="panel upcoming-total"><p className="eyebrow">Next cycle</p><h2>Recurring total</h2><strong>{currency(recurringTotal)}</strong><div className="upcoming-visual"><Repeat2 size={40} /><span>{activeRecurring.length} payment{activeRecurring.length === 1 ? "" : "s"}<br />scheduled</span></div><p>That&apos;s {totals.income ? (recurringTotal / totals.income * 100).toFixed(1) : "0.0"}% of your monthly income.</p></aside></section>}
 
         {activePage === "Reports" && <section className="reports-grid"><article className="panel report-chart"><div className="panel-title-row"><div><p className="eyebrow">Net cash flow</p><h2>Financial performance</h2></div><select value={reportRange} onChange={(event) => { const nextRange = Number(event.target.value) as ReportRange; if (reportRangeOptions.includes(nextRange)) setReportRange(nextRange); }} aria-label="Report period">{reportRangeOptions.map((months) => <option key={months} value={months}>{months} {months === 1 ? "month" : "months"}</option>)}</select></div><div className="report-kpis"><span><small>Total income</small><strong>{currency(reportTotals.income * 1000, true)}</strong><em>{reportRangeLabel}</em></span><span><small>Total spent</small><strong>{currency(reportTotals.spending * 1000, true)}</strong><em>{Math.round(reportTotals.spending / Math.max(reportTotals.income, 1) * 100)}% of income</em></span><span><small>Net saved</small><strong>{currency((reportTotals.income - reportTotals.spending) * 1000, true)}</strong><em>Cash-flow gap</em></span></div><div className="report-area"><ResponsiveContainer width="100%" height="100%"><AreaChart data={reportData}><defs><linearGradient id="reportFill" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor="#b5f300" stopOpacity={0.45} /><stop offset="100%" stopColor="#b5f300" stopOpacity={0.02} /></linearGradient></defs><CartesianGrid vertical={false} stroke="#e5e8df" /><XAxis dataKey="month" axisLine={false} tickLine={false} /><YAxis hide /><Tooltip content={<ChartTooltip />} /><Area type="monotone" dataKey="income" stroke="#8cc000" fill="url(#reportFill)" strokeWidth={3} /><Area type="monotone" dataKey="spending" stroke="#171816" fill="transparent" strokeWidth={2} /></AreaChart></ResponsiveContainer></div></article><article className="panel category-card"><p className="eyebrow">Current breakdown</p><h2>Spending by category</h2><div className="donut-wrap"><ResponsiveContainer width="100%" height="100%"><PieChart><Pie data={categoryData} dataKey="value" innerRadius="63%" outerRadius="88%" paddingAngle={3} stroke="none">{categoryData.map((item) => <Cell key={item.name} fill={item.color} />)}</Pie><Tooltip formatter={(value) => `${value}%`} /></PieChart></ResponsiveContainer><div><strong>{currency(totals.expenses, true)}</strong><span>total spent</span></div></div><div className="category-legend">{categoryData.map((item) => <span key={item.name}><i style={{ background: item.color }} />{item.name}<strong>{item.value}%</strong></span>)}</div></article></section>}
 
@@ -905,6 +1038,10 @@ export function Dashboard({ userName, userEmail }: DashboardProps) {
       {savingsModal && <Modal id="savings-title" eyebrow="Savings destination" title={savingsEditing ? `Edit ${savingsEditing.name}` : "Create savings goal"} onClose={() => { setSavingsModal(false); setSavingsEditing(null); }} className="savings-modal"><form key={savingsEditing?.id ?? "new-savings"} onSubmit={saveSavingsGoal}><label>Savings name<input name="name" defaultValue={savingsEditing?.name ?? ""} placeholder="e.g. Emergency savings" required /></label><div className="form-row savings-target-fields"><label><span className="field-label-row">Target amount <small>Optional</small></span><input name="targetAmount" type="number" min="1" step="0.01" defaultValue={savingsEditing?.targetAmount ?? ""} placeholder="No target" /></label><label><span className="field-label-row">Target date <small>Optional</small></span><input name="targetDate" type="date" defaultValue={savingsEditing?.targetDate ?? ""} /></label></div><label>Goal color<span className="color-field"><input name="color" type="color" defaultValue={savingsEditing?.color ?? "#b5f300"} /><small>Used on your savings progress card</small></span></label>{savingsEditing && <p className="form-help">Your saved amount stays unchanged when you edit this goal.</p>}<button className="primary-button" type="submit" disabled={savingAction !== null}>{savingAction === "savings" ? <><LoaderCircle className="spin" size={16} />Saving...</> : savingsEditing ? "Save goal changes" : "Create savings goal"}</button></form></Modal>}
 
       {recurringModal && <Modal id="recurring-title" eyebrow="Payment schedule" title={recurringEditing ? "Edit recurring expense" : "Add recurring expense"} onClose={() => { setRecurringModal(false); setRecurringEditing(null); }}><form key={recurringEditing?.id ?? "new-recurring"} onSubmit={saveRecurring}><label>Name<input name="name" defaultValue={recurringEditing?.name ?? ""} placeholder="e.g. Internet plan" required /></label><label>Pay from<select name="accountId" defaultValue={recurringEditing?.accountId ?? firstAccountId} required><option value="" disabled>{accounts.length ? "Select an account" : "Create an account first"}</option>{accounts.map((account) => <option key={account.id} value={account.id}>{account.name} · {exactCurrency(account.balance)}</option>)}</select></label><div className="form-row"><label>Amount<input name="amount" type="number" min="0.01" step="0.01" defaultValue={recurringEditing?.amount} required /></label><label>Next due date<input name="nextDueAt" type="date" defaultValue={recurringEditing?.nextDueAt ?? dateInputValue()} required /></label></div><div className="form-row"><label>Category<select name="categoryId" defaultValue={recurringEditing?.categoryId ?? firstCategoryId} required><option value="" disabled>{categories.length ? "Select a category" : "Add a category first"}</option>{categories.map((category) => <option key={category.id} value={category.id}>{category.name}</option>)}</select></label><label>Frequency<select name="frequency" defaultValue={recurringEditing?.frequency ?? "MONTHLY"}><option value="WEEKLY">Weekly</option><option value="BIWEEKLY">Every two weeks</option><option value="MONTHLY">Monthly</option><option value="QUARTERLY">Quarterly</option><option value="YEARLY">Yearly</option></select></label></div><button className="primary-button" type="submit" disabled={savingAction !== null || accounts.length === 0 || categories.length === 0}>{savingAction === "recurring" ? <><LoaderCircle className="spin" size={16} />Saving...</> : recurringEditing ? "Save recurring changes" : "Add to schedule"}</button></form></Modal>}
+
+      {recurringPayment && recurringPaymentStep === "ASK" && <Modal id="recurring-payment-title" eyebrow={daysUntilDate(recurringPayment.nextDueAt) < 0 ? "Payment overdue" : "Payment due today"} title={`Did you pay ${recurringPayment.name}?`} onClose={dismissRecurringPayment} className="recurring-payment-modal"><div className="due-payment-summary"><MerchantIcon label={recurringPayment.name} tone={recurringPayment.tone} /><div><small>Scheduled for {recurringPayment.due}</small><strong>{exactCurrency(recurringPayment.amount)}</strong><span>{recurringPayment.category} · {frequencyLabel[recurringPayment.frequency]}</span></div></div><p className="due-payment-copy">Choose yes to record the expense and select where the payment came from. “Not yet” keeps it overdue, while skip advances the schedule without creating a transaction.</p><div className="due-payment-actions"><button type="button" className="cancel-button" disabled={savingAction !== null} onClick={dismissRecurringPayment}>Not yet</button><button type="button" className="skip-button" disabled={savingAction !== null} onClick={skipRecurringPayment}>{savingAction === "recurring-skip" ? <><LoaderCircle className="spin" size={14} />Skipping...</> : "Skip this due date"}</button><button type="button" className="primary-button" disabled={savingAction !== null || accounts.length === 0} onClick={() => setRecurringPaymentStep("PAY")}>Yes, I paid</button></div></Modal>}
+
+      {recurringPayment && recurringPaymentStep === "PAY" && <Modal id="recurring-payment-details-title" eyebrow="Record payment" title={`Pay ${recurringPayment.name}`} onClose={dismissRecurringPayment} className="recurring-payment-modal"><form onSubmit={saveRecurringPayment}><div className="due-payment-summary"><MerchantIcon label={recurringPayment.name} tone={recurringPayment.tone} /><div><small>Due {recurringPayment.due}</small><strong>{exactCurrency(recurringPayment.amount)}</strong><span>The next due date updates only after this saves.</span></div></div><label>Paid from<select name="accountId" defaultValue={recurringPayment.accountId} required><option value="" disabled>Select the payment account</option>{accounts.map((account) => <option key={account.id} value={account.id}>{account.name} · {exactCurrency(account.balance)}</option>)}</select></label><div className="form-row"><label>Amount<input name="amount" type="number" min="0.01" step="0.01" defaultValue={recurringPayment.amount} required /></label><label>Payment date<input name="paidAt" type="date" defaultValue={dateInputValue()} required /></label></div><label className="check-row"><input name="countsTowardBudget" type="checkbox" defaultChecked /><span><strong>Count toward monthly budget</strong><small>This expense will be included in this month’s spending limit.</small></span></label><div className="due-payment-form-actions"><button type="button" className="cancel-button" disabled={savingAction !== null} onClick={() => setRecurringPaymentStep("ASK")}><ArrowRight className="back-arrow" size={14} />Back</button><button className="primary-button" type="submit" disabled={savingAction !== null || accounts.length === 0}>{savingAction === "recurring-payment" ? <><LoaderCircle className="spin" size={16} />Recording...</> : "Record payment"}</button></div></form></Modal>}
 
       {accountModal && <Modal id="account-title" eyebrow="Money location" title={accountEditing ? `Edit ${accountEditing.name}` : "Add an account"} onClose={() => { setAccountModal(false); setAccountEditing(null); }}><form key={accountEditing?.id ?? "new-account"} onSubmit={saveAccount}><label>Account name<input name="name" defaultValue={accountEditing?.name ?? ""} placeholder="e.g. Cash on Hand, Maya, Metrobank" required /></label><label>Account type<select name="type" defaultValue={accountEditing?.type ?? "CASH"}><option value="CASH">Cash</option><option value="E_WALLET">E-wallet</option><option value="CHECKING">Bank account</option><option value="SAVINGS">Savings account</option><option value="CREDIT_CARD">Credit card</option></select></label><label>Opening balance<input name="openingBalance" type="number" step="0.01" defaultValue={accountEditing?.openingBalance ?? 0} required /></label>{accountEditing && <p className="form-help">Changing the opening balance adjusts the account’s calculated balance while preserving transaction history.</p>}<button className="primary-button" type="submit" disabled={savingAction !== null}>{savingAction === "account" ? <><LoaderCircle className="spin" size={16} />Saving...</> : accountEditing ? "Save account changes" : "Add account"}</button></form></Modal>}
 
@@ -920,7 +1057,7 @@ export function Dashboard({ userName, userEmail }: DashboardProps) {
 
       {settingsModal && <Modal id="settings-title" eyebrow="Your account" title="Profile settings" onClose={() => setSettingsModal(false)}><form onSubmit={saveSettings}><div className="profile-summary"><span className="profile-avatar"><UserRound size={22} /></span><div><strong>{userEmail}</strong><small>Signed in with Supabase</small></div></div><label>Display name<input name="displayName" defaultValue={settings.displayName} required /></label><label>Monthly savings target<input name="monthlyTarget" type="number" min="1000" step="500" defaultValue={settings.monthlyTarget} required /></label><label className="check-row"><input name="budgetAlerts" type="checkbox" defaultChecked={settings.budgetAlerts} aria-label="Enable spending alerts" /><span><strong>Spending alerts</strong><small>Show a reminder as expenses approach this month’s budget.</small></span></label><button className="primary-button" type="submit" disabled={!dataReady || savingAction !== null}>{savingAction === "settings" ? <><LoaderCircle className="spin" size={16} />Saving...</> : "Save settings"}</button></form></Modal>}
 
-      {notificationsModal && <Modal id="notifications-title" eyebrow="Stay on track" title="Notifications" onClose={() => setNotificationsModal(false)} className="notifications-modal"><div className="notification-list">{notificationItems.length ? notificationItems.map((item) => <article key={item.key}><span><Bell size={15} /></span><div><strong>{item.title}</strong><p>{item.body}</p></div></article>) : <p className="empty-state compact">You&apos;re all caught up.</p>}</div><button className="primary-button" onClick={() => { setNotificationsRead(true); setNotificationsModal(false); notify("Notifications marked as read"); }}>Mark all as read</button></Modal>}
+      {notificationsModal && <Modal id="notifications-title" eyebrow="Stay on track" title="Notifications" onClose={() => setNotificationsModal(false)} className="notifications-modal"><div className="notification-list">{notificationItems.length ? notificationItems.map((item) => <article key={item.key}><span><Bell size={15} /></span><div><strong>{item.title}</strong><p>{item.body}</p></div></article>) : <p className="empty-state compact">You&apos;re all caught up.</p>}</div>{notificationPermission !== "granted" && <button className="device-reminder-button" type="button" onClick={enableDeviceNotifications}><Bell size={15} />Enable device reminders</button>}<button className="primary-button" onClick={() => { setNotificationsRead(true); setNotificationsModal(false); notify("Notifications marked as read"); }}>Mark all as read</button></Modal>}
 
       {toast && <div className="toast" role="status"><Check size={16} />{toast}</div>}
     </main>

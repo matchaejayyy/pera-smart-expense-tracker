@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="Pera">
+  <rect width="512" height="512" rx="112" fill="#121311"/>
+  <circle cx="256" cy="256" r="153" fill="none" stroke="#b5f300" stroke-width="42" stroke-linecap="round" stroke-dasharray="746 215" transform="rotate(-51 256 256)"/>
+  <path d="M205 350V157h71c67 0 105 31 105 88 0 58-40 92-108 92h-20v13h-48Zm48-59h20c37 0 57-15 57-45 0-29-19-42-56-42h-21v87Z" fill="#fff"/>
+</svg>
