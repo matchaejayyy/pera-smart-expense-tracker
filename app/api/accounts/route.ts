@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { getAccountBalances } from "../../../lib/account-balances";
 import { getPrisma } from "../../../lib/prisma";
 import { createClient } from "../../../lib/supabase/server";
 
@@ -16,29 +17,8 @@ export async function GET() {
   const current = await getContext();
   if (!current) return NextResponse.json({ error: "The Prisma database connection is not configured." }, { status: 503 });
 
-  const accounts = await current.prisma.account.findMany({
-    where: { ownerId: current.user.id, isArchived: false },
-    include: {
-      transactions: { select: { amount: true, type: true } },
-      adjustments: { select: { amount: true, direction: true } },
-      outgoingTransfers: { select: { amount: true } },
-      incomingTransfers: { select: { amount: true } },
-    },
-    orderBy: { createdAt: "asc" },
-  });
-
-  const data = accounts.map(({ transactions, adjustments, outgoingTransfers, incomingTransfers, ...account }) => {
-    const transactionBalance = transactions.reduce((sum, item) => {
-      const amount = Number(item.amount);
-      return item.type === "INCOME" ? sum + amount : item.type === "EXPENSE" || item.type === "SAVINGS" ? sum - amount : sum;
-    }, 0);
-    const adjustmentBalance = adjustments.reduce((sum, item) => sum + (item.direction === "ADD" ? Number(item.amount) : -Number(item.amount)), 0);
-    const incoming = incomingTransfers.reduce((sum, item) => sum + Number(item.amount), 0);
-    const outgoing = outgoingTransfers.reduce((sum, item) => sum + Number(item.amount), 0);
-    return { ...account, balance: Number(account.openingBalance) + transactionBalance + adjustmentBalance + incoming - outgoing };
-  });
-
-  return NextResponse.json({ data });
+  const data = await getAccountBalances(current.prisma, current.user.id);
+  return NextResponse.json({ data }, { headers: { "Cache-Control": "private, no-store" } });
 }
 
 export async function POST(request: Request) {

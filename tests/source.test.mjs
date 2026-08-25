@@ -37,7 +37,7 @@ test("keeps the Pera product, CRUD flows, account controls, RLS, and standard Ne
   assert.match(dashboard, /Search transactions/);
   assert.match(dashboard, /Plan savings transfer/);
   assert.match(dashboard, /Edit transaction/);
-  assert.match(dashboard, /useState<number \| null>\(null\)/);
+  assert.match(dashboard, /useState<number \| null>\(\(\) => initialData\?\.monthlyBudget/);
   assert.match(dashboard, /Set by you/);
   assert.match(dashboard, /\/api\/monthly-budget/);
   assert.doesNotMatch(dashboard, /const monthlyBudget = totals\.income|Automatic from income/);
@@ -74,7 +74,8 @@ test("keeps the Pera product, CRUD flows, account controls, RLS, and standard Ne
   assert.match(dashboard, /is due \$\{timing\}/);
   assert.match(dashboard, /const readApiPayload/);
   assert.match(dashboard, /response\.text\(\)/);
-  assert.match(dashboard, /loadApiResource<TransactionRecord\[\]>/);
+  assert.doesNotMatch(dashboard, /loadApiResource/);
+  assert.match(protectedPage, /getDashboardData\(prisma, user\.id\)/);
   assert.doesNotMatch(dashboard, /responses\.map\(\(response\) => response\.json\(\)\)/);
   assert.match(dashboard, /reportRangeOptions: ReportRange\[\] = \[1, 3, 6, 9, 12\]/);
   assert.match(dashboard, /const \[overviewRange, setOverviewRange\] = useState<ReportRange>\(1\)/);

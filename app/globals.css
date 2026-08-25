@@ -79,6 +79,9 @@ button:disabled { opacity: .52; cursor: not-allowed !important; }
 .legend-dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; }
 .legend-dot.lime { background: var(--lime-strong); } .legend-dot.ink { background: var(--ink); } .legend-dot.pale { background: #e5e8df; }
 .cash-chart { height: 222px; margin: 0 -6px; }
+.chart-placeholder { width: 100%; height: 100%; border-radius: 18px; background: linear-gradient(100deg, rgba(229,232,223,.42) 20%, rgba(245,247,241,.9) 42%, rgba(229,232,223,.42) 64%); background-size: 220% 100%; animation: chart-loading 1.25s ease-in-out infinite; }
+@keyframes chart-loading { to { background-position-x: -220%; } }
+@media (prefers-reduced-motion: reduce) { .chart-placeholder { animation: none; } }
 .insight-card { overflow: hidden; min-height: 330px; display: flex; flex-direction: column; background: var(--lime); border-color: #a7d92f; position: relative; }
 .insight-card::after { content: ""; position: absolute; width: 220px; height: 220px; border: 44px solid rgba(17,18,16,.08); border-radius: 50%; right: -90px; bottom: -100px; }
 .spark { width: 46px; height: 46px; margin-bottom: 36px; border-radius: 14px; background: var(--ink); color: var(--lime); display: grid; place-items: center; font-size: 21px; }

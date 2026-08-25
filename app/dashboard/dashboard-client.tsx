@@ -4,19 +4,9 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { CSSProperties, FormEvent, MouseEvent, ReactNode } from "react";
+import dynamic from "next/dynamic";
 import { useRouter } from "next/navigation";
-import {
-  Area,
-  AreaChart,
-  CartesianGrid,
-  Cell,
-  Pie,
-  PieChart,
-  ResponsiveContainer,
-  Tooltip,
-  XAxis,
-  YAxis,
-} from "recharts";
+import type { DashboardData, DashboardRecurringRecord, DashboardTransactionRecord } from "@/lib/dashboard-data";
 import {
   ArrowDownLeft,
   ArrowLeftRight,
@@ -65,12 +55,6 @@ type SmartTip = { kind: string; title: string; body: string };
 type DashboardSettings = { displayName: string; monthlyTarget: number; budgetAlerts: boolean };
 type DeleteTarget = { kind: "transaction" | "recurring" | "category" | "savings" | "account"; id: string; name: string };
 type SaveAction = "transaction" | "recurring" | "recurring-payment" | "recurring-skip" | "category" | "savings" | "account" | "account-action" | "budget" | "delete" | "settings" | "transfer" | "recurring-toggle" | "smart-rule" | "tips";
-type TransactionRecord = { id: string; merchant: string; accountId: string; account: { name: string }; categoryId: string | null; savingsGoalId: string | null; category?: { name: string } | null; savingsGoal?: { name: string } | null; bookedAt: string; amount: string; type: TransactionType; countsTowardBudget: boolean };
-type RecurringRecord = { id: string; name: string; accountId: string; account: { name: string }; categoryId: string | null; category?: { name: string } | null; amount: string; nextDueAt: string; isActive: boolean; frequency: string };
-type AccountRecord = { id: string; name: string; type: AccountType; openingBalance: string; balance: number };
-type MonthlyBudgetRecord = { id: string; month: string; limit: string };
-type SavingsRecord = { id: string; name: string; targetAmount: string | null; currentAmount: string; targetDate: string | null; color: string };
-type ProfileRecord = { displayName?: string; monthlySavingsTarget?: string | number; budgetAlerts?: boolean; smartRule?: boolean };
 type ApiPayload<T> = { data?: T; error?: string };
 
 const defaultTips: SmartTip[] = [
@@ -90,20 +74,30 @@ const pageMeta: Record<Page, { eyebrow: string; title: string }> = {
 
 const categoryColors = ["#151613", "#b5f300", "#a9b3a2", "#d8c8ef", "#efc9aa", "#a9d9c2"];
 const reportRangeOptions: ReportRange[] = [1, 3, 6, 9, 12];
+const chartFallback = () => <div className="chart-placeholder" aria-hidden="true" />;
+const CashFlowChart = dynamic(() => import("./dashboard-charts").then((module) => module.CashFlowChart), { ssr: false, loading: chartFallback });
+const ReportAreaChart = dynamic(() => import("./dashboard-charts").then((module) => module.ReportAreaChart), { ssr: false, loading: chartFallback });
+const CategoryDonutChart = dynamic(() => import("./dashboard-charts").then((module) => module.CategoryDonutChart), { ssr: false, loading: chartFallback });
 
-const currency = (value: number, compact = false) => new Intl.NumberFormat("en-PH", {
+const currencyFormatter = new Intl.NumberFormat("en-PH", {
   style: "currency",
   currency: "PHP",
-  maximumFractionDigits: compact ? 0 : 2,
-  notation: compact ? "compact" : "standard",
-}).format(Number.isFinite(value) ? value : 0);
-
-const exactCurrency = (value: number) => new Intl.NumberFormat("en-PH", {
-  style: "currency",
-  currency: "PHP",
-  minimumFractionDigits: Number.isInteger(value) ? 0 : 2,
   maximumFractionDigits: 2,
-}).format(Number.isFinite(value) ? value : 0);
+});
+
+const compactCurrencyFormatter = new Intl.NumberFormat("en-PH", {
+  style: "currency",
+  currency: "PHP",
+  maximumFractionDigits: 0,
+  notation: "compact",
+});
+
+const wholeCurrencyFormatter = new Intl.NumberFormat("en-PH", { style: "currency", currency: "PHP", maximumFractionDigits: 0 });
+const decimalCurrencyFormatter = new Intl.NumberFormat("en-PH", { style: "currency", currency: "PHP", minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
+const currency = (value: number, compact = false) => (compact ? compactCurrencyFormatter : currencyFormatter).format(Number.isFinite(value) ? value : 0);
+
+const exactCurrency = (value: number) => (Number.isInteger(value) ? wholeCurrencyFormatter : decimalCurrencyFormatter).format(Number.isFinite(value) ? value : 0);
 
 const dateInputValue = () => {
   const now = new Date();
@@ -137,12 +131,47 @@ const readApiPayload = async <T,>(response: Response, label: string): Promise<Ap
   }
 };
 
-const loadApiResource = async <T,>(path: string, label: string): Promise<ApiPayload<T>> => {
-  const response = await fetch(path, { cache: "no-store", headers: { accept: "application/json" } });
-  const payload = await readApiPayload<T>(response, label);
-  if (!response.ok) throw new Error(payload.error || `${label} could not be loaded (HTTP ${response.status}).`);
-  return payload;
-};
+const mapTransactionRecord = (item: DashboardTransactionRecord): Transaction => ({
+  id: item.id,
+  accountId: item.accountId,
+  account: item.account.name,
+  merchant: item.type === "SAVINGS" ? item.savingsGoal?.name ?? item.merchant : item.merchant,
+  categoryId: item.categoryId,
+  savingsGoalId: item.savingsGoalId,
+  category: item.category?.name ?? (item.type === "INCOME" ? "Salary" : item.type === "SAVINGS" ? "Savings" : "Other"),
+  date: new Date(item.bookedAt).toLocaleString("en-PH", { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" }).replace(",", " ·"),
+  bookedAt: item.bookedAt.slice(0, 10),
+  amount: Number(item.amount),
+  type: item.type,
+  countsTowardBudget: item.countsTowardBudget,
+  tone: item.type === "INCOME" ? "lime" : item.type === "SAVINGS" ? "blue" : "peach",
+});
+
+const mapRecurringRecord = (item: DashboardRecurringRecord): RecurringItem => ({
+  id: item.id,
+  accountId: item.accountId,
+  account: item.account.name,
+  name: item.name,
+  categoryId: item.categoryId,
+  category: item.category?.name ?? "Other",
+  amount: Number(item.amount),
+  due: new Date(item.nextDueAt).toLocaleDateString("en-PH", { month: "short", day: "2-digit" }),
+  nextDueAt: item.nextDueAt.slice(0, 10),
+  active: item.isActive,
+  tone: "mint",
+  frequency: item.frequency,
+});
+
+const mapAccountRecord = (item: DashboardData["accounts"][number]): Account => ({
+  id: item.id,
+  name: item.name,
+  type: item.type,
+  openingBalance: Number(item.openingBalance),
+  balance: Number(item.balance),
+});
+
+const transactionBalanceDelta = (type: TransactionType, amount: number) => type === "INCOME" ? amount : -amount;
+const moneyTotal = (value: number) => Math.round(value * 100) / 100;
 
 function MerchantIcon({ label, tone }: { label: string; tone: string }) {
   return <span className={`merchant-icon ${tone}`} aria-hidden="true">{label.slice(0, 1).toUpperCase()}</span>;
@@ -151,11 +180,6 @@ function MerchantIcon({ label, tone }: { label: string; tone: string }) {
 function AccountIcon({ type }: { type: AccountType }) {
   const Icon = type === "CASH" ? Banknote : type === "E_WALLET" ? Smartphone : type === "CREDIT_CARD" ? CreditCard : Landmark;
   return <span className={`account-type-icon ${type.toLowerCase()}`} aria-hidden="true"><Icon size={20} /></span>;
-}
-
-function ChartTooltip({ active, payload, label }: { active?: boolean; payload?: Array<{ name: string; value: number; color: string }>; label?: string }) {
-  if (!active || !payload?.length) return null;
-  return <div className="chart-tooltip"><strong>{label}</strong>{payload.map((item) => <span key={item.name}><i style={{ background: item.color }} />{item.name}: {currency(item.value * 1000, true)}</span>)}</div>;
 }
 
 function Modal({ id, eyebrow, title, onClose, children, className = "" }: { id: string; eyebrow: string; title: string; onClose: () => void; children: ReactNode; className?: string }) {
@@ -172,17 +196,21 @@ function Modal({ id, eyebrow, title, onClose, children, className = "" }: { id: 
   );
 }
 
-type DashboardProps = { userName: string; userEmail: string };
+type DashboardProps = { userName: string; userEmail: string; initialData: DashboardData | null; initialError: string };
 
-export function Dashboard({ userName, userEmail }: DashboardProps) {
+export function Dashboard({ userName, userEmail, initialData, initialError }: DashboardProps) {
   const router = useRouter();
   const [activePage, setActivePage] = useState<Page>("Overview");
-  const [transactions, setTransactions] = useState<Transaction[]>([]);
-  const [recurring, setRecurring] = useState<RecurringItem[]>([]);
-  const [accounts, setAccounts] = useState<Account[]>([]);
-  const [categories, setCategories] = useState<Category[]>([]);
-  const [savingsGoals, setSavingsGoals] = useState<SavingsGoal[]>([]);
-  const [settings, setSettings] = useState<DashboardSettings>({ displayName: userName, monthlyTarget: 20000, budgetAlerts: true });
+  const [transactions, setTransactions] = useState<Transaction[]>(() => (initialData?.transactions ?? []).map(mapTransactionRecord));
+  const [recurring, setRecurring] = useState<RecurringItem[]>(() => (initialData?.recurring ?? []).map(mapRecurringRecord));
+  const [accounts, setAccounts] = useState<Account[]>(() => (initialData?.accounts ?? []).map(mapAccountRecord));
+  const [categories, setCategories] = useState<Category[]>(() => (initialData?.categories ?? []).map((item) => ({ ...item, transactionType: item.transactionType as CategoryType })));
+  const [savingsGoals, setSavingsGoals] = useState<SavingsGoal[]>(() => (initialData?.savings ?? []).map((item) => ({ id: item.id, name: item.name, targetAmount: item.targetAmount === null ? null : Number(item.targetAmount), currentAmount: Number(item.currentAmount), targetDate: item.targetDate?.slice(0, 10) ?? null, color: item.color })));
+  const [settings, setSettings] = useState<DashboardSettings>(() => ({
+    displayName: initialData?.profile?.displayName || userName,
+    monthlyTarget: Number(initialData?.profile?.monthlySavingsTarget ?? 20000),
+    budgetAlerts: initialData?.profile?.budgetAlerts ?? true,
+  }));
   const [smartTips, setSmartTips] = useState<SmartTip[]>(defaultTips);
   const [transactionModal, setTransactionModal] = useState(false);
   const [transactionEditing, setTransactionEditingState] = useState<Transaction | null>(null);
@@ -199,7 +227,7 @@ export function Dashboard({ userName, userEmail }: DashboardProps) {
   const [accountModal, setAccountModal] = useState(false);
   const [accountEditing, setAccountEditing] = useState<Account | null>(null);
   const [accountAction, setAccountAction] = useState<{ account: Account; mode: "ADD" | "SUBTRACT" | "TRANSFER" } | null>(null);
-  const [monthlyBudget, setMonthlyBudget] = useState<number | null>(null);
+  const [monthlyBudget, setMonthlyBudget] = useState<number | null>(() => initialData?.monthlyBudget ? Number(initialData.monthlyBudget.limit) : null);
   const [budgetModal, setBudgetModal] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<DeleteTarget | null>(null);
   const [transferModal, setTransferModal] = useState(false);
@@ -210,14 +238,14 @@ export function Dashboard({ userName, userEmail }: DashboardProps) {
   const [overviewRange, setOverviewRange] = useState<ReportRange>(1);
   const [reportRange, setReportRange] = useState<ReportRange>(6);
   const [toast, setToast] = useState<string | null>(null);
-  const [smartRule, setSmartRule] = useState(false);
+  const [smartRule, setSmartRule] = useState(initialData?.profile?.smartRule ?? false);
   const [notificationsRead, setNotificationsRead] = useState(false);
   const [notificationPermission, setNotificationPermission] = useState<NotificationPermission>("default");
   const [tipsLoading, setTipsLoading] = useState(false);
   const [savingAction, setSavingAction] = useState<SaveAction | null>(null);
   const saveLock = useRef(false);
-  const [dataMode, setDataMode] = useState<"checking" | "unavailable" | "live">("checking");
-  const [dataError, setDataError] = useState("");
+  const [dataMode, setDataMode] = useState<"unavailable" | "live">(initialData ? "live" : "unavailable");
+  const [dataError, setDataError] = useState(initialError);
 
   const setTransactionEditing = (transaction: Transaction | null) => {
     setTransactionEditingState(transaction);
@@ -244,77 +272,6 @@ export function Dashboard({ userName, userEmail }: DashboardProps) {
       if ("Notification" in window) setNotificationPermission(Notification.permission);
     }, 0);
     return () => window.clearTimeout(timer);
-  }, []);
-
-  useEffect(() => {
-    let mounted = true;
-    Promise.all([
-      loadApiResource<TransactionRecord[]>("/api/transactions", "Transactions"),
-      loadApiResource<RecurringRecord[]>("/api/recurring", "Recurring expenses"),
-      loadApiResource<AccountRecord[]>("/api/accounts", "Accounts"),
-      loadApiResource<Category[]>("/api/categories", "Categories"),
-      loadApiResource<SavingsRecord[]>("/api/savings", "Savings"),
-      loadApiResource<ProfileRecord | null>("/api/profile", "Profile settings"),
-      loadApiResource<MonthlyBudgetRecord | null>("/api/monthly-budget", "Monthly budget"),
-    ]).then(([transactionPayload, recurringPayload, accountPayload, categoryPayload, savingsPayload, profilePayload, budgetPayload]) => {
-      if (!mounted) return;
-
-      setTransactions((transactionPayload.data ?? []).map((item) => ({
-          id: item.id,
-          accountId: item.accountId,
-          account: item.account.name,
-          merchant: item.type === "SAVINGS" ? item.savingsGoal?.name ?? item.merchant : item.merchant,
-          categoryId: item.categoryId,
-          savingsGoalId: item.savingsGoalId,
-          category: item.category?.name ?? (item.type === "INCOME" ? "Salary" : item.type === "SAVINGS" ? "Savings" : "Other"),
-          date: new Date(item.bookedAt).toLocaleString("en-PH", { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" }).replace(",", " ·"),
-          bookedAt: item.bookedAt.slice(0, 10),
-          amount: Number(item.amount),
-          type: item.type,
-          countsTowardBudget: item.countsTowardBudget,
-          tone: item.type === "INCOME" ? "lime" : item.type === "SAVINGS" ? "blue" : "peach",
-        })));
-      setRecurring((recurringPayload.data ?? []).map((item) => ({
-          id: item.id,
-          accountId: item.accountId,
-          account: item.account.name,
-          name: item.name,
-          categoryId: item.categoryId,
-          category: item.category?.name ?? "Other",
-          amount: Number(item.amount),
-          due: new Date(item.nextDueAt).toLocaleDateString("en-PH", { month: "short", day: "2-digit" }),
-          nextDueAt: item.nextDueAt.slice(0, 10),
-          active: item.isActive,
-          tone: "mint",
-          frequency: item.frequency as Frequency,
-        })));
-      setAccounts((accountPayload.data ?? []).map((item) => ({ id: item.id, name: item.name, type: item.type, openingBalance: Number(item.openingBalance), balance: Number(item.balance) })));
-      setCategories((categoryPayload.data ?? []).map((item) => ({ ...item, transactionType: item.transactionType as CategoryType })));
-      setSavingsGoals((savingsPayload.data ?? []).map((item) => ({ id: item.id, name: item.name, targetAmount: item.targetAmount === null ? null : Number(item.targetAmount), currentAmount: Number(item.currentAmount), targetDate: item.targetDate?.slice(0, 10) ?? null, color: item.color })));
-      setMonthlyBudget(budgetPayload.data ? Number(budgetPayload.data.limit) : null);
-      const profile = profilePayload.data;
-      if (profile) {
-        setSettings((current) => ({
-            ...current,
-            displayName: profile.displayName || current.displayName,
-            monthlyTarget: Number(profile.monthlySavingsTarget ?? current.monthlyTarget),
-            budgetAlerts: profile.budgetAlerts ?? current.budgetAlerts,
-          }));
-        setSmartRule(profile.smartRule ?? false);
-      }
-      setDataMode("live");
-      setDataError("");
-    }).catch((error: unknown) => {
-      if (!mounted) return;
-      setTransactions([]);
-      setRecurring([]);
-      setAccounts([]);
-      setCategories([]);
-      setSavingsGoals([]);
-      setDataMode("unavailable");
-      setDataError(error instanceof Error ? error.message : "The database is unavailable.");
-    });
-    return () => { mounted = false; };
   }, []);
 
   useEffect(() => {
@@ -517,11 +474,6 @@ export function Dashboard({ userName, userEmail }: DashboardProps) {
     return null;
   };
 
-  const refreshAccounts = async () => {
-    const payload = await loadApiResource<AccountRecord[]>("/api/accounts", "Accounts");
-    setAccounts((payload.data ?? []).map((item) => ({ id: item.id, name: item.name, type: item.type, openingBalance: Number(item.openingBalance), balance: Number(item.balance) })));
-  };
-
   const addTransactionRecord = async (record: Omit<Transaction, "id" | "tone">) => {
     const result = await syncMutation("/api/transactions", {
       method: "POST",
@@ -535,8 +487,8 @@ export function Dashboard({ userName, userEmail }: DashboardProps) {
       tone: record.type === "INCOME" ? "lime" : record.type === "SAVINGS" ? "blue" : "peach",
     };
     setTransactions((current) => [entry, ...current]);
+    setAccounts((items) => items.map((account) => account.id === record.accountId ? { ...account, balance: moneyTotal(account.balance + transactionBalanceDelta(record.type, record.amount)) } : account));
     if (record.type === "SAVINGS" && record.savingsGoalId) setSavingsGoals((items) => items.map((goal) => goal.id === record.savingsGoalId ? { ...goal, currentAmount: goal.currentAmount + record.amount } : goal));
-    await refreshAccounts();
     setNotificationsRead(false);
     return true;
   };
@@ -576,7 +528,12 @@ export function Dashboard({ userName, userEmail }: DashboardProps) {
         if (transactionEditing.type === "SAVINGS" && transactionEditing.savingsGoalId) setSavingsGoals((items) => items.map((goal) => goal.id === transactionEditing.savingsGoalId ? { ...goal, currentAmount: Math.max(0, goal.currentAmount - transactionEditing.amount) } : goal));
         if (type === "SAVINGS" && savingsGoalId) setSavingsGoals((items) => items.map((goal) => goal.id === savingsGoalId ? { ...goal, currentAmount: goal.currentAmount + amount } : goal));
         setTransactions((items) => items.map((item) => item.id === transactionEditing.id ? { ...item, ...nextRecord, tone: type === "INCOME" ? "lime" : type === "SAVINGS" ? "blue" : "peach" } : item));
-        await refreshAccounts();
+        setAccounts((items) => items.map((entry) => {
+          let balance = entry.balance;
+          if (entry.id === transactionEditing.accountId) balance -= transactionBalanceDelta(transactionEditing.type, transactionEditing.amount);
+          if (entry.id === accountId) balance += transactionBalanceDelta(type, amount);
+          return balance === entry.balance ? entry : { ...entry, balance: moneyTotal(balance) };
+        }));
         notify(`${merchant} was updated`);
       } else {
         if (!await addTransactionRecord(nextRecord)) return;
@@ -740,7 +697,7 @@ export function Dashboard({ userName, userEmail }: DashboardProps) {
         }, ...items]);
       }
       const nextDueAt = applyRecurringAdvance(item, result);
-      await refreshAccounts();
+      setAccounts((items) => items.map((entry) => entry.id === accountId ? { ...entry, balance: moneyTotal(entry.balance - amount) } : entry));
       setRecurringPayment(null);
       setRecurringPaymentStep("ASK");
       setNotificationsRead(false);
@@ -814,7 +771,7 @@ export function Dashboard({ userName, userEmail }: DashboardProps) {
         const item = transactions.find((entry) => entry.id === id);
         if (item?.type === "SAVINGS" && item.savingsGoalId) setSavingsGoals((items) => items.map((goal) => goal.id === item.savingsGoalId ? { ...goal, currentAmount: Math.max(0, goal.currentAmount - item.amount) } : goal));
         setTransactions((items) => items.filter((item) => item.id !== id));
-        await refreshAccounts();
+        if (item) setAccounts((items) => items.map((account) => account.id === item.accountId ? { ...account, balance: moneyTotal(account.balance - transactionBalanceDelta(item.type, item.amount)) } : account));
       } else if (kind === "recurring") {
         setRecurring((items) => items.filter((item) => item.id !== id));
       } else if (kind === "category") {
@@ -850,8 +807,20 @@ export function Dashboard({ userName, userEmail }: DashboardProps) {
         headers: { "content-type": "application/json" },
         body: JSON.stringify(accountEditing ? { id: accountEditing.id, ...values } : values),
       });
-      if (!result) return;
-      await refreshAccounts();
+      if (!result || typeof result.id !== "string") return;
+      if (accountEditing) {
+        setAccounts((items) => items.map((item) => item.id === accountEditing.id ? {
+          ...item,
+          ...values,
+          balance: moneyTotal(item.balance - item.openingBalance + values.openingBalance),
+        } : item));
+      } else {
+        setAccounts((items) => [...items, {
+          id: result.id as string,
+          ...values,
+          balance: Number(result.balance ?? values.openingBalance),
+        }]);
+      }
       setAccountModal(false);
       setAccountEditing(null);
       notify(`${values.name} was ${accountEditing ? "updated" : "created"}`);
@@ -873,7 +842,12 @@ export function Dashboard({ userName, userEmail }: DashboardProps) {
         : { action: "ADJUSTMENT", accountId: accountAction.account.id, direction: accountAction.mode, amount, note, occurredAt };
       const result = await syncMutation("/api/account-actions", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(payload) });
       if (!result) return;
-      await refreshAccounts();
+      setAccounts((items) => items.map((account) => {
+        let balance = account.balance;
+        if (account.id === accountAction.account.id) balance += accountAction.mode === "ADD" ? amount : -amount;
+        if (isTransfer && account.id === String(data.get("toAccountId"))) balance += amount;
+        return balance === account.balance ? account : { ...account, balance: moneyTotal(balance) };
+      }));
       setAccountAction(null);
       notify(isTransfer ? "Transfer completed" : `${accountAction.account.name} balance updated`);
     });
@@ -1014,7 +988,7 @@ export function Dashboard({ userName, userEmail }: DashboardProps) {
           </section>
 
           <section className="dashboard-grid">
-            <article className="panel spending-panel"><div className="panel-title-row"><div><p className="eyebrow">Cash flow</p><h2>Income vs. spending</h2></div><div className="panel-head-actions"><button className="text-button report-entry" onClick={() => changePage("Reports")}><BarChart3 size={14} />Reports</button><select className="period-pill" value={overviewRange} onChange={(event) => { const nextRange = Number(event.target.value) as ReportRange; if (reportRangeOptions.includes(nextRange)) setOverviewRange(nextRange); }} aria-label="Overview cash flow period">{reportRangeOptions.map((months) => <option key={months} value={months}>{months === 1 ? "This month" : `Last ${months} months`}</option>)}</select></div></div><div className="chart-legend"><span><i className="legend-dot lime" />Income</span><span><i className="legend-dot ink" />Spending</span></div><div className="cash-chart"><ResponsiveContainer width="100%" height="100%"><AreaChart data={overviewCashFlowData} margin={{ top: 8, right: 4, left: -22, bottom: 0 }}><defs><linearGradient id="incomeFill" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor="#b5f300" stopOpacity={0.34} /><stop offset="100%" stopColor="#b5f300" stopOpacity={0} /></linearGradient></defs><CartesianGrid vertical={false} stroke="#e5e8df" strokeDasharray="4 5" /><XAxis dataKey="label" axisLine={false} tickLine={false} minTickGap={16} tick={{ fill: "#74776d", fontSize: 10 }} /><YAxis axisLine={false} tickLine={false} tick={{ fill: "#9a9d94", fontSize: 9 }} tickFormatter={(value) => `₱${value}k`} /><Tooltip content={<ChartTooltip />} /><Area type="monotone" dataKey="income" stroke="#94ca00" strokeWidth={2.5} fill="url(#incomeFill)" /><Area type="monotone" dataKey="spending" stroke="#171816" strokeWidth={2.5} fill="transparent" /></AreaChart></ResponsiveContainer></div></article>
+            <article className="panel spending-panel"><div className="panel-title-row"><div><p className="eyebrow">Cash flow</p><h2>Income vs. spending</h2></div><div className="panel-head-actions"><button className="text-button report-entry" onClick={() => changePage("Reports")}><BarChart3 size={14} />Reports</button><select className="period-pill" value={overviewRange} onChange={(event) => { const nextRange = Number(event.target.value) as ReportRange; if (reportRangeOptions.includes(nextRange)) setOverviewRange(nextRange); }} aria-label="Overview cash flow period">{reportRangeOptions.map((months) => <option key={months} value={months}>{months === 1 ? "This month" : `Last ${months} months`}</option>)}</select></div></div><div className="chart-legend"><span><i className="legend-dot lime" />Income</span><span><i className="legend-dot ink" />Spending</span></div><div className="cash-chart"><CashFlowChart data={overviewCashFlowData} /></div></article>
             <article className="panel insight-card"><span className="spark"><Sparkles size={20} /></span><p className="eyebrow">Pera smart tip</p><h2>{smartTips[0]?.title ?? "You’re spending smarter."}</h2><p>{smartTips[0]?.body}</p><button onClick={() => changePage("Insights")}>See all insights <ArrowRight size={16} /></button></article>
             <article className="panel transactions-panel"><div className="panel-title-row"><div><p className="eyebrow">Latest activity</p><h2>Recent transactions</h2></div><button className="text-button" onClick={() => changePage("Transactions")}>View all <ArrowRight size={14} /></button></div><div className="transaction-list">{transactions.slice(0, 4).map((item) => <div className="transaction" key={item.id}><MerchantIcon label={item.merchant} tone={item.tone} /><span className="transaction-main"><strong>{item.merchant}</strong><small>{item.date} · {item.category} · {item.account}</small></span><strong className={item.type === "INCOME" ? "positive" : item.type === "SAVINGS" ? "saving" : ""}>{item.type === "INCOME" ? "+" : "−"}{currency(item.amount, true)}</strong></div>)}{transactions.length === 0 && <p className="empty-state compact">No transactions yet.</p>}</div></article>
             <article className="panel budget-card"><div className="panel-title-row"><div><p className="eyebrow">Set by you</p><h2>Monthly budget</h2></div><span className="budget-percent">{monthlyBudget ? `${budgetPercent}%` : "Not set"}</span></div><div className="budget-ring" style={{ "--progress": `${Math.min(budgetPercent, 100)}%` } as React.CSSProperties} aria-label={monthlyBudget ? `${budgetPercent} percent of monthly budget spent` : "Monthly budget not set"}><div><strong>{exactCurrency(totalSpent)}</strong><span>{monthlyBudget ? `of ${exactCurrency(monthlyBudget)} budget` : "Set a monthly limit"}</span></div></div><div className="budget-copy"><span><i className="legend-dot lime" />Spent {exactCurrency(totalSpent)}</span><span><i className="legend-dot pale" />Available {exactCurrency(Math.max(0, (monthlyBudget ?? 0) - totalSpent))}</span></div><button className="primary-button" disabled={!dataReady} onClick={() => setBudgetModal(true)}>{monthlyBudget ? "Edit monthly budget" : "Set monthly budget"}</button></article>
@@ -1030,7 +1004,7 @@ export function Dashboard({ userName, userEmail }: DashboardProps) {
 
         {activePage === "Recurring" && <section className="page-grid recurring-page"><article className="panel wide-panel"><div className="panel-title-row"><div><p className="eyebrow">Payment calendar</p><h2>Payment schedule</h2></div><button className="secondary-button" disabled={!dataReady || accounts.length === 0} onClick={() => { setRecurringEditing(null); setRecurringModal(true); }}><Plus size={15} />Add recurring</button></div><div className="recurring-list">{recurring.map((item) => <div className="recurring-item" key={item.id}><div className={`due-chip${item.active && daysUntilDate(item.nextDueAt) <= 0 ? " overdue" : ""}`}><CalendarClock size={15} /><span><small>{item.active && daysUntilDate(item.nextDueAt) < 0 ? "Overdue" : "Due"}</small><strong>{item.due}</strong></span></div><MerchantIcon label={item.name} tone={item.tone} /><span className="transaction-main"><strong>{item.name}</strong><small>{item.category} · {frequencyLabel[item.frequency]} · {item.account}</small></span><strong>{currency(item.amount)}</strong>{item.active && daysUntilDate(item.nextDueAt) <= 0 && <button className="due-action" disabled={savingAction !== null} onClick={() => { setRecurringPayment(item); setRecurringPaymentStep("ASK"); }}>Confirm payment</button>}<span className="row-actions recurring-actions"><button onClick={() => { setRecurringEditing(item); setRecurringModal(true); }} aria-label={`Edit ${item.name}`}><Pencil size={14} /></button><button className="danger" onClick={() => setDeleteTarget({ kind: "recurring", id: item.id, name: item.name })} aria-label={`Delete ${item.name}`}><Trash2 size={14} /></button></span><button className={item.active ? "toggle active" : "toggle"} disabled={savingAction !== null} onClick={() => toggleRecurring(item.id)} aria-label={`${item.active ? "Pause" : "Resume"} ${item.name}`} aria-pressed={item.active}><i /></button></div>)}{recurring.length === 0 && <p className="empty-state">Add your first recurring expense to build a payment schedule.</p>}</div></article><aside className="panel upcoming-total"><p className="eyebrow">Next cycle</p><h2>Recurring total</h2><strong>{currency(recurringTotal)}</strong><div className="upcoming-visual"><Repeat2 size={40} /><span>{activeRecurring.length} payment{activeRecurring.length === 1 ? "" : "s"}<br />scheduled</span></div><p>That&apos;s {totals.income ? (recurringTotal / totals.income * 100).toFixed(1) : "0.0"}% of your monthly income.</p></aside></section>}
 
-        {activePage === "Reports" && <section className="reports-grid"><article className="panel report-chart"><div className="panel-title-row"><div><p className="eyebrow">Net cash flow</p><h2>Financial performance</h2></div><select value={reportRange} onChange={(event) => { const nextRange = Number(event.target.value) as ReportRange; if (reportRangeOptions.includes(nextRange)) setReportRange(nextRange); }} aria-label="Report period">{reportRangeOptions.map((months) => <option key={months} value={months}>{months} {months === 1 ? "month" : "months"}</option>)}</select></div><div className="report-kpis"><span><small>Total income</small><strong>{currency(reportTotals.income * 1000, true)}</strong><em>{reportRangeLabel}</em></span><span><small>Total spent</small><strong>{currency(reportTotals.spending * 1000, true)}</strong><em>{Math.round(reportTotals.spending / Math.max(reportTotals.income, 1) * 100)}% of income</em></span><span><small>Net saved</small><strong>{currency((reportTotals.income - reportTotals.spending) * 1000, true)}</strong><em>Cash-flow gap</em></span></div><div className="report-area"><ResponsiveContainer width="100%" height="100%"><AreaChart data={reportData}><defs><linearGradient id="reportFill" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor="#b5f300" stopOpacity={0.45} /><stop offset="100%" stopColor="#b5f300" stopOpacity={0.02} /></linearGradient></defs><CartesianGrid vertical={false} stroke="#e5e8df" /><XAxis dataKey="month" axisLine={false} tickLine={false} /><YAxis hide /><Tooltip content={<ChartTooltip />} /><Area type="monotone" dataKey="income" stroke="#8cc000" fill="url(#reportFill)" strokeWidth={3} /><Area type="monotone" dataKey="spending" stroke="#171816" fill="transparent" strokeWidth={2} /></AreaChart></ResponsiveContainer></div></article><article className="panel category-card"><p className="eyebrow">Current breakdown</p><h2>Spending by category</h2><div className="donut-wrap"><ResponsiveContainer width="100%" height="100%"><PieChart><Pie data={categoryData} dataKey="value" innerRadius="63%" outerRadius="88%" paddingAngle={3} stroke="none">{categoryData.map((item) => <Cell key={item.name} fill={item.color} />)}</Pie><Tooltip formatter={(value) => `${value}%`} /></PieChart></ResponsiveContainer><div><strong>{currency(totals.expenses, true)}</strong><span>total spent</span></div></div><div className="category-legend">{categoryData.map((item) => <span key={item.name}><i style={{ background: item.color }} />{item.name}<strong>{item.value}%</strong></span>)}</div></article></section>}
+        {activePage === "Reports" && <section className="reports-grid"><article className="panel report-chart"><div className="panel-title-row"><div><p className="eyebrow">Net cash flow</p><h2>Financial performance</h2></div><select value={reportRange} onChange={(event) => { const nextRange = Number(event.target.value) as ReportRange; if (reportRangeOptions.includes(nextRange)) setReportRange(nextRange); }} aria-label="Report period">{reportRangeOptions.map((months) => <option key={months} value={months}>{months} {months === 1 ? "month" : "months"}</option>)}</select></div><div className="report-kpis"><span><small>Total income</small><strong>{currency(reportTotals.income * 1000, true)}</strong><em>{reportRangeLabel}</em></span><span><small>Total spent</small><strong>{currency(reportTotals.spending * 1000, true)}</strong><em>{Math.round(reportTotals.spending / Math.max(reportTotals.income, 1) * 100)}% of income</em></span><span><small>Net saved</small><strong>{currency((reportTotals.income - reportTotals.spending) * 1000, true)}</strong><em>Cash-flow gap</em></span></div><div className="report-area"><ReportAreaChart data={reportData} /></div></article><article className="panel category-card"><p className="eyebrow">Current breakdown</p><h2>Spending by category</h2><div className="donut-wrap"><CategoryDonutChart data={categoryData} /><div><strong>{currency(totals.expenses, true)}</strong><span>total spent</span></div></div><div className="category-legend">{categoryData.map((item) => <span key={item.name}><i style={{ background: item.color }} />{item.name}<strong>{item.value}%</strong></span>)}</div></article></section>}
 
         {activePage === "Insights" && <section className="insights-layout"><article className="hero-insight"><span className="spark"><Sparkles size={22} /></span><button className="hero-action" onClick={refreshTips} disabled={tipsLoading || savingAction !== null}>{tipsLoading ? <LoaderCircle className="spin" size={15} /> : <RefreshCw size={15} />}{tipsLoading ? "Refreshing..." : "Refresh tips"}</button><p className="eyebrow">Your weekly money brief</p><h2>Your current cash-flow gap is <u>{currency(monthlyGap, true)}</u>.</h2><p>Pera reviews your spending rhythm, recurring charges, and current budget pace to suggest practical next moves.</p></article><div className="insight-list"><article className="panel insight-detail"><span className="insight-number">01</span><div><p className="eyebrow">Subscription check</p><h2>{smartTips[0]?.title}</h2><p>{smartTips[0]?.body}</p><button onClick={() => changePage("Recurring")}>Review subscriptions <ArrowRight size={14} /></button></div></article><article className="panel insight-detail"><span className="insight-number">02</span><div><p className="eyebrow">Dining pattern</p><h2>{smartTips[1]?.title}</h2><p>{smartTips[1]?.body}</p><button disabled={!dataReady || savingAction !== null} onClick={toggleSmartRule}>{savingAction === "smart-rule" ? <><LoaderCircle className="spin" size={14} />Saving...</> : smartRule ? <><Check size={14} />Rule active</> : <>Create smart rule <ArrowRight size={14} /></>}</button></div></article><article className="panel insight-detail"><span className="insight-number">03</span><div><p className="eyebrow">Cash buffer</p><h2>{monthlyGap > 0 ? "Your balance can work harder" : "Build your first cash-flow gap"}</h2><p>{monthlyGap > 0 ? "Moving a safe part of this month’s surplus can grow your emergency fund without affecting scheduled bills." : "Add your real income and expenses to see how much is available for savings."}</p><button disabled={!dataReady || monthlyGap <= 0} onClick={() => setTransferModal(true)}>Plan transfer <ArrowRight size={14} /></button></div></article></div></section>}
         </div>
