@@ -82,6 +82,10 @@ export const ProfileScalarFieldEnum = {
   displayName: 'displayName',
   currency: 'currency',
   timezone: 'timezone',
+  monthlySavingsTarget: 'monthlySavingsTarget',
+  budgetAlerts: 'budgetAlerts',
+  smartRule: 'smartRule',
+  transportReminder: 'transportReminder',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
 } as const
@@ -123,6 +127,7 @@ export const TransactionScalarFieldEnum = {
   ownerId: 'ownerId',
   accountId: 'accountId',
   categoryId: 'categoryId',
+  savingsGoalId: 'savingsGoalId',
   type: 'type',
   merchant: 'merchant',
   note: 'note',

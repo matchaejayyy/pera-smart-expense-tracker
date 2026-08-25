@@ -31,12 +31,16 @@ enum RecurringFrequency {
 }
 
 model Profile {
-  id          String   @id @db.Uuid
-  displayName String?
-  currency    String   @default("PHP")
-  timezone    String   @default("Asia/Manila")
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id                   String   @id @db.Uuid
+  displayName          String?
+  currency             String   @default("PHP")
+  timezone             String   @default("Asia/Manila")
+  monthlySavingsTarget Decimal  @default(20000) @db.Decimal(14, 2)
+  budgetAlerts         Boolean  @default(true)
+  smartRule            Boolean  @default(false)
+  transportReminder    Boolean  @default(false)
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
 
   @@map("profiles")
 }
@@ -81,6 +85,7 @@ model Transaction {
   ownerId     String          @db.Uuid
   accountId   String          @db.Uuid
   categoryId  String?         @db.Uuid
+  savingsGoalId String?       @db.Uuid
   type        TransactionType
   merchant    String
   note        String?
@@ -89,12 +94,14 @@ model Transaction {
   isRecurring Boolean         @default(false)
   account     Account         @relation(fields: [accountId], references: [id], onDelete: Cascade)
   category    Category?       @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+  savingsGoal SavingsGoal?    @relation(fields: [savingsGoalId], references: [id], onDelete: SetNull)
   createdAt   DateTime        @default(now())
   updatedAt   DateTime        @updatedAt
 
   @@index([ownerId, bookedAt(sort: Desc)])
   @@index([accountId])
   @@index([categoryId])
+  @@index([savingsGoalId])
   @@map("transactions")
 }
 
@@ -136,10 +143,11 @@ model SavingsGoal {
   id            String   @id @default(uuid()) @db.Uuid
   ownerId       String   @db.Uuid
   name          String
-  targetAmount  Decimal  @db.Decimal(14, 2)
+  targetAmount  Decimal? @db.Decimal(14, 2)
   currentAmount Decimal  @default(0) @db.Decimal(14, 2)
   targetDate    DateTime?
   color         String   @default("#B5F300")
+  transactions  Transaction[]
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
 

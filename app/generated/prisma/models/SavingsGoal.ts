@@ -211,7 +211,7 @@ export type SavingsGoalGroupByOutputType = {
   id: string
   ownerId: string
   name: string
-  targetAmount: runtime.Decimal
+  targetAmount: runtime.Decimal | null
   currentAmount: runtime.Decimal
   targetDate: Date | null
   color: string
@@ -246,24 +246,26 @@ export type SavingsGoalWhereInput = {
   id?: Prisma.UuidFilter<"SavingsGoal"> | string
   ownerId?: Prisma.UuidFilter<"SavingsGoal"> | string
   name?: Prisma.StringFilter<"SavingsGoal"> | string
-  targetAmount?: Prisma.DecimalFilter<"SavingsGoal"> | runtime.Decimal | runtime.DecimalJsLike | number | string
+  targetAmount?: Prisma.DecimalNullableFilter<"SavingsGoal"> | runtime.Decimal | runtime.DecimalJsLike | number | string | null
   currentAmount?: Prisma.DecimalFilter<"SavingsGoal"> | runtime.Decimal | runtime.DecimalJsLike | number | string
   targetDate?: Prisma.DateTimeNullableFilter<"SavingsGoal"> | Date | string | null
   color?: Prisma.StringFilter<"SavingsGoal"> | string
   createdAt?: Prisma.DateTimeFilter<"SavingsGoal"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"SavingsGoal"> | Date | string
+  transactions?: Prisma.TransactionListRelationFilter
 }
 
 export type SavingsGoalOrderByWithRelationInput = {
   id?: Prisma.SortOrder
   ownerId?: Prisma.SortOrder
   name?: Prisma.SortOrder
-  targetAmount?: Prisma.SortOrder
+  targetAmount?: Prisma.SortOrderInput | Prisma.SortOrder
   currentAmount?: Prisma.SortOrder
   targetDate?: Prisma.SortOrderInput | Prisma.SortOrder
   color?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
+  transactions?: Prisma.TransactionOrderByRelationAggregateInput
 }
 
 export type SavingsGoalWhereUniqueInput = Prisma.AtLeast<{
@@ -273,19 +275,20 @@ export type SavingsGoalWhereUniqueInput = Prisma.AtLeast<{
   NOT?: Prisma.SavingsGoalWhereInput | Prisma.SavingsGoalWhereInput[]
   ownerId?: Prisma.UuidFilter<"SavingsGoal"> | string
   name?: Prisma.StringFilter<"SavingsGoal"> | string
-  targetAmount?: Prisma.DecimalFilter<"SavingsGoal"> | runtime.Decimal | runtime.DecimalJsLike | number | string
+  targetAmount?: Prisma.DecimalNullableFilter<"SavingsGoal"> | runtime.Decimal | runtime.DecimalJsLike | number | string | null
   currentAmount?: Prisma.DecimalFilter<"SavingsGoal"> | runtime.Decimal | runtime.DecimalJsLike | number | string
   targetDate?: Prisma.DateTimeNullableFilter<"SavingsGoal"> | Date | string | null
   color?: Prisma.StringFilter<"SavingsGoal"> | string
   createdAt?: Prisma.DateTimeFilter<"SavingsGoal"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"SavingsGoal"> | Date | string
+  transactions?: Prisma.TransactionListRelationFilter
 }, "id">
 
 export type SavingsGoalOrderByWithAggregationInput = {
   id?: Prisma.SortOrder
   ownerId?: Prisma.SortOrder
   name?: Prisma.SortOrder
-  targetAmount?: Prisma.SortOrder
+  targetAmount?: Prisma.SortOrderInput | Prisma.SortOrder
   currentAmount?: Prisma.SortOrder
   targetDate?: Prisma.SortOrderInput | Prisma.SortOrder
   color?: Prisma.SortOrder
@@ -305,7 +308,7 @@ export type SavingsGoalScalarWhereWithAggregatesInput = {
   id?: Prisma.UuidWithAggregatesFilter<"SavingsGoal"> | string
   ownerId?: Prisma.UuidWithAggregatesFilter<"SavingsGoal"> | string
   name?: Prisma.StringWithAggregatesFilter<"SavingsGoal"> | string
-  targetAmount?: Prisma.DecimalWithAggregatesFilter<"SavingsGoal"> | runtime.Decimal | runtime.DecimalJsLike | number | string
+  targetAmount?: Prisma.DecimalNullableWithAggregatesFilter<"SavingsGoal"> | runtime.Decimal | runtime.DecimalJsLike | number | string | null
   currentAmount?: Prisma.DecimalWithAggregatesFilter<"SavingsGoal"> | runtime.Decimal | runtime.DecimalJsLike | number | string
   targetDate?: Prisma.DateTimeNullableWithAggregatesFilter<"SavingsGoal"> | Date | string | null
   color?: Prisma.StringWithAggregatesFilter<"SavingsGoal"> | string
@@ -317,55 +320,59 @@ export type SavingsGoalCreateInput = {
   id?: string
   ownerId: string
   name: string
-  targetAmount: runtime.Decimal | runtime.DecimalJsLike | number | string
+  targetAmount?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
   currentAmount?: runtime.Decimal | runtime.DecimalJsLike | number | string
   targetDate?: Date | string | null
   color?: string
   createdAt?: Date | string
   updatedAt?: Date | string
+  transactions?: Prisma.TransactionCreateNestedManyWithoutSavingsGoalInput
 }
 
 export type SavingsGoalUncheckedCreateInput = {
   id?: string
   ownerId: string
   name: string
-  targetAmount: runtime.Decimal | runtime.DecimalJsLike | number | string
+  targetAmount?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
   currentAmount?: runtime.Decimal | runtime.DecimalJsLike | number | string
   targetDate?: Date | string | null
   color?: string
   createdAt?: Date | string
   updatedAt?: Date | string
+  transactions?: Prisma.TransactionUncheckedCreateNestedManyWithoutSavingsGoalInput
 }
 
 export type SavingsGoalUpdateInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   ownerId?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
-  targetAmount?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  targetAmount?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
   currentAmount?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   targetDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   color?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  transactions?: Prisma.TransactionUpdateManyWithoutSavingsGoalNestedInput
 }
 
 export type SavingsGoalUncheckedUpdateInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   ownerId?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
-  targetAmount?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  targetAmount?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
   currentAmount?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   targetDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   color?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  transactions?: Prisma.TransactionUncheckedUpdateManyWithoutSavingsGoalNestedInput
 }
 
 export type SavingsGoalCreateManyInput = {
   id?: string
   ownerId: string
   name: string
-  targetAmount: runtime.Decimal | runtime.DecimalJsLike | number | string
+  targetAmount?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
   currentAmount?: runtime.Decimal | runtime.DecimalJsLike | number | string
   targetDate?: Date | string | null
   color?: string
@@ -377,7 +384,7 @@ export type SavingsGoalUpdateManyMutationInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   ownerId?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
-  targetAmount?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  targetAmount?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
   currentAmount?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   targetDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   color?: Prisma.StringFieldUpdateOperationsInput | string
@@ -389,12 +396,17 @@ export type SavingsGoalUncheckedUpdateManyInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   ownerId?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
-  targetAmount?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  targetAmount?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
   currentAmount?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   targetDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   color?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+}
+
+export type SavingsGoalNullableScalarRelationFilter = {
+  is?: Prisma.SavingsGoalWhereInput | null
+  isNot?: Prisma.SavingsGoalWhereInput | null
 }
 
 export type SavingsGoalCountOrderByAggregateInput = {
@@ -443,10 +455,127 @@ export type SavingsGoalSumOrderByAggregateInput = {
   currentAmount?: Prisma.SortOrder
 }
 
+export type SavingsGoalCreateNestedOneWithoutTransactionsInput = {
+  create?: Prisma.XOR<Prisma.SavingsGoalCreateWithoutTransactionsInput, Prisma.SavingsGoalUncheckedCreateWithoutTransactionsInput>
+  connectOrCreate?: Prisma.SavingsGoalCreateOrConnectWithoutTransactionsInput
+  connect?: Prisma.SavingsGoalWhereUniqueInput
+}
+
+export type SavingsGoalUpdateOneWithoutTransactionsNestedInput = {
+  create?: Prisma.XOR<Prisma.SavingsGoalCreateWithoutTransactionsInput, Prisma.SavingsGoalUncheckedCreateWithoutTransactionsInput>
+  connectOrCreate?: Prisma.SavingsGoalCreateOrConnectWithoutTransactionsInput
+  upsert?: Prisma.SavingsGoalUpsertWithoutTransactionsInput
+  disconnect?: Prisma.SavingsGoalWhereInput | boolean
+  delete?: Prisma.SavingsGoalWhereInput | boolean
+  connect?: Prisma.SavingsGoalWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.SavingsGoalUpdateToOneWithWhereWithoutTransactionsInput, Prisma.SavingsGoalUpdateWithoutTransactionsInput>, Prisma.SavingsGoalUncheckedUpdateWithoutTransactionsInput>
+}
+
+export type NullableDecimalFieldUpdateOperationsInput = {
+  set?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  increment?: runtime.Decimal | runtime.DecimalJsLike | number | string
+  decrement?: runtime.Decimal | runtime.DecimalJsLike | number | string
+  multiply?: runtime.Decimal | runtime.DecimalJsLike | number | string
+  divide?: runtime.Decimal | runtime.DecimalJsLike | number | string
+}
+
 export type NullableDateTimeFieldUpdateOperationsInput = {
   set?: Date | string | null
 }
 
+export type SavingsGoalCreateWithoutTransactionsInput = {
+  id?: string
+  ownerId: string
+  name: string
+  targetAmount?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  currentAmount?: runtime.Decimal | runtime.DecimalJsLike | number | string
+  targetDate?: Date | string | null
+  color?: string
+  createdAt?: Date | string
+  updatedAt?: Date | string
+}
+
+export type SavingsGoalUncheckedCreateWithoutTransactionsInput = {
+  id?: string
+  ownerId: string
+  name: string
+  targetAmount?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  currentAmount?: runtime.Decimal | runtime.DecimalJsLike | number | string
+  targetDate?: Date | string | null
+  color?: string
+  createdAt?: Date | string
+  updatedAt?: Date | string
+}
+
+export type SavingsGoalCreateOrConnectWithoutTransactionsInput = {
+  where: Prisma.SavingsGoalWhereUniqueInput
+  create: Prisma.XOR<Prisma.SavingsGoalCreateWithoutTransactionsInput, Prisma.SavingsGoalUncheckedCreateWithoutTransactionsInput>
+}
+
+export type SavingsGoalUpsertWithoutTransactionsInput = {
+  update: Prisma.XOR<Prisma.SavingsGoalUpdateWithoutTransactionsInput, Prisma.SavingsGoalUncheckedUpdateWithoutTransactionsInput>
+  create: Prisma.XOR<Prisma.SavingsGoalCreateWithoutTransactionsInput, Prisma.SavingsGoalUncheckedCreateWithoutTransactionsInput>
+  where?: Prisma.SavingsGoalWhereInput
+}
+
+export type SavingsGoalUpdateToOneWithWhereWithoutTransactionsInput = {
+  where?: Prisma.SavingsGoalWhereInput
+  data: Prisma.XOR<Prisma.SavingsGoalUpdateWithoutTransactionsInput, Prisma.SavingsGoalUncheckedUpdateWithoutTransactionsInput>
+}
+
+export type SavingsGoalUpdateWithoutTransactionsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  ownerId?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  targetAmount?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  currentAmount?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  targetDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  color?: Prisma.StringFieldUpdateOperationsInput | string
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+}
+
+export type SavingsGoalUncheckedUpdateWithoutTransactionsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  ownerId?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  targetAmount?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  currentAmount?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  targetDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  color?: Prisma.StringFieldUpdateOperationsInput | string
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+}
+
+
+/**
+ * Count Type SavingsGoalCountOutputType
+ */
+
+export type SavingsGoalCountOutputType = {
+  transactions: number
+}
+
+export type SavingsGoalCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  transactions?: boolean | SavingsGoalCountOutputTypeCountTransactionsArgs
+}
+
+/**
+ * SavingsGoalCountOutputType without action
+ */
+export type SavingsGoalCountOutputTypeDefaultArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the SavingsGoalCountOutputType
+   */
+  select?: Prisma.SavingsGoalCountOutputTypeSelect<ExtArgs> | null
+}
+
+/**
+ * SavingsGoalCountOutputType without action
+ */
+export type SavingsGoalCountOutputTypeCountTransactionsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.TransactionWhereInput
+}
 
 
 export type SavingsGoalSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
@@ -459,6 +588,8 @@ export type SavingsGoalSelect<ExtArgs extends runtime.Types.Extensions.InternalA
   color?: boolean
   createdAt?: boolean
   updatedAt?: boolean
+  transactions?: boolean | Prisma.SavingsGoal$transactionsArgs<ExtArgs>
+  _count?: boolean | Prisma.SavingsGoalCountOutputTypeDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["savingsGoal"]>
 
 export type SavingsGoalSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
@@ -498,15 +629,23 @@ export type SavingsGoalSelectScalar = {
 }
 
 export type SavingsGoalOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "ownerId" | "name" | "targetAmount" | "currentAmount" | "targetDate" | "color" | "createdAt" | "updatedAt", ExtArgs["result"]["savingsGoal"]>
+export type SavingsGoalInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  transactions?: boolean | Prisma.SavingsGoal$transactionsArgs<ExtArgs>
+  _count?: boolean | Prisma.SavingsGoalCountOutputTypeDefaultArgs<ExtArgs>
+}
+export type SavingsGoalIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {}
+export type SavingsGoalIncludeUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {}
 
 export type $SavingsGoalPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   name: "SavingsGoal"
-  objects: {}
+  objects: {
+    transactions: Prisma.$TransactionPayload<ExtArgs>[]
+  }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: string
     ownerId: string
     name: string
-    targetAmount: runtime.Decimal
+    targetAmount: runtime.Decimal | null
     currentAmount: runtime.Decimal
     targetDate: Date | null
     color: string
@@ -906,6 +1045,7 @@ readonly fields: SavingsGoalFieldRefs;
  */
 export interface Prisma__SavingsGoalClient<T, Null = never, ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
   readonly [Symbol.toStringTag]: "PrismaPromise"
+  transactions<T extends Prisma.SavingsGoal$transactionsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.SavingsGoal$transactionsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$TransactionPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
    * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -961,6 +1101,10 @@ export type SavingsGoalFindUniqueArgs<ExtArgs extends runtime.Types.Extensions.I
    */
   omit?: Prisma.SavingsGoalOmit<ExtArgs> | null
   /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.SavingsGoalInclude<ExtArgs> | null
+  /**
    * Filter, which SavingsGoal to fetch.
    */
   where: Prisma.SavingsGoalWhereUniqueInput
@@ -979,6 +1123,10 @@ export type SavingsGoalFindUniqueOrThrowArgs<ExtArgs extends runtime.Types.Exten
    */
   omit?: Prisma.SavingsGoalOmit<ExtArgs> | null
   /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.SavingsGoalInclude<ExtArgs> | null
+  /**
    * Filter, which SavingsGoal to fetch.
    */
   where: Prisma.SavingsGoalWhereUniqueInput
@@ -996,6 +1144,10 @@ export type SavingsGoalFindFirstArgs<ExtArgs extends runtime.Types.Extensions.In
    * Omit specific fields from the SavingsGoal
    */
   omit?: Prisma.SavingsGoalOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.SavingsGoalInclude<ExtArgs> | null
   /**
    * Filter, which SavingsGoal to fetch.
    */
@@ -1045,6 +1197,10 @@ export type SavingsGoalFindFirstOrThrowArgs<ExtArgs extends runtime.Types.Extens
    */
   omit?: Prisma.SavingsGoalOmit<ExtArgs> | null
   /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.SavingsGoalInclude<ExtArgs> | null
+  /**
    * Filter, which SavingsGoal to fetch.
    */
   where?: Prisma.SavingsGoalWhereInput
@@ -1092,6 +1248,10 @@ export type SavingsGoalFindManyArgs<ExtArgs extends runtime.Types.Extensions.Int
    * Omit specific fields from the SavingsGoal
    */
   omit?: Prisma.SavingsGoalOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.SavingsGoalInclude<ExtArgs> | null
   /**
    * Filter, which SavingsGoals to fetch.
    */
@@ -1141,6 +1301,10 @@ export type SavingsGoalCreateArgs<ExtArgs extends runtime.Types.Extensions.Inter
    */
   omit?: Prisma.SavingsGoalOmit<ExtArgs> | null
   /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.SavingsGoalInclude<ExtArgs> | null
+  /**
    * The data needed to create a SavingsGoal.
    */
   data: Prisma.XOR<Prisma.SavingsGoalCreateInput, Prisma.SavingsGoalUncheckedCreateInput>
@@ -1188,6 +1352,10 @@ export type SavingsGoalUpdateArgs<ExtArgs extends runtime.Types.Extensions.Inter
    * Omit specific fields from the SavingsGoal
    */
   omit?: Prisma.SavingsGoalOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.SavingsGoalInclude<ExtArgs> | null
   /**
    * The data needed to update a SavingsGoal.
    */
@@ -1255,6 +1423,10 @@ export type SavingsGoalUpsertArgs<ExtArgs extends runtime.Types.Extensions.Inter
    */
   omit?: Prisma.SavingsGoalOmit<ExtArgs> | null
   /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.SavingsGoalInclude<ExtArgs> | null
+  /**
    * The filter to search for the SavingsGoal to update in case it exists.
    */
   where: Prisma.SavingsGoalWhereUniqueInput
@@ -1281,6 +1453,10 @@ export type SavingsGoalDeleteArgs<ExtArgs extends runtime.Types.Extensions.Inter
    */
   omit?: Prisma.SavingsGoalOmit<ExtArgs> | null
   /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.SavingsGoalInclude<ExtArgs> | null
+  /**
    * Filter which SavingsGoal to delete.
    */
   where: Prisma.SavingsGoalWhereUniqueInput
@@ -1301,6 +1477,30 @@ export type SavingsGoalDeleteManyArgs<ExtArgs extends runtime.Types.Extensions.I
 }
 
 /**
+ * SavingsGoal.transactions
+ */
+export type SavingsGoal$transactionsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the Transaction
+   */
+  select?: Prisma.TransactionSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the Transaction
+   */
+  omit?: Prisma.TransactionOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.TransactionInclude<ExtArgs> | null
+  where?: Prisma.TransactionWhereInput
+  orderBy?: Prisma.TransactionOrderByWithRelationInput | Prisma.TransactionOrderByWithRelationInput[]
+  cursor?: Prisma.TransactionWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.TransactionScalarFieldEnum | Prisma.TransactionScalarFieldEnum[]
+}
+
+/**
  * SavingsGoal without action
  */
 export type SavingsGoalDefaultArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
@@ -1312,4 +1512,8 @@ export type SavingsGoalDefaultArgs<ExtArgs extends runtime.Types.Extensions.Inte
    * Omit specific fields from the SavingsGoal
    */
   omit?: Prisma.SavingsGoalOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.SavingsGoalInclude<ExtArgs> | null
 }

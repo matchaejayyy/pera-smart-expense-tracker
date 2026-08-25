@@ -12,17 +12,81 @@ async function context() {
 
 export async function GET() {
   const current = await context();
-  if (!current) return NextResponse.json({ data: [], demo: true });
+  if (!current) return NextResponse.json({ error: "The Prisma database connection is not configured." }, { status: 503 });
   const data = await current.prisma.recurringExpense.findMany({ where: { ownerId: current.user.id }, include: { category: true }, orderBy: { nextDueAt: "asc" } });
-  return NextResponse.json({ data, demo: false });
+  return NextResponse.json({ data });
+}
+
+export async function POST(request: Request) {
+  const current = await context();
+  if (!current) return NextResponse.json({ error: "Connect the Prisma database to save recurring expenses." }, { status: 503 });
+
+  const body = await request.json() as {
+    name?: string;
+    categoryId?: string;
+    amount?: number;
+    nextDueAt?: string;
+    frequency?: "WEEKLY" | "BIWEEKLY" | "MONTHLY" | "QUARTERLY" | "YEARLY";
+  };
+  if (!body.name || !body.categoryId || !body.amount || !body.nextDueAt) return NextResponse.json({ error: "Name, category, amount, and next due date are required." }, { status: 400 });
+
+  const account = await current.prisma.account.findFirst({ where: { ownerId: current.user.id, isArchived: false } })
+    ?? await current.prisma.account.create({ data: { ownerId: current.user.id, name: "Primary account", type: "CHECKING", openingBalance: 0 } });
+
+  const category = await current.prisma.category.findFirst({ where: { id: body.categoryId, ownerId: current.user.id } });
+  if (!category) return NextResponse.json({ error: "Category not found." }, { status: 404 });
+
+  const data = await current.prisma.recurringExpense.create({
+    data: {
+      ownerId: current.user.id,
+      accountId: account.id,
+      categoryId: category.id,
+      name: body.name,
+      amount: body.amount,
+      nextDueAt: new Date(body.nextDueAt),
+      frequency: body.frequency ?? "MONTHLY",
+    },
+    include: { category: true },
+  });
+  return NextResponse.json({ data }, { status: 201 });
 }
 
 export async function PATCH(request: Request) {
   const current = await context();
-  if (!current) return NextResponse.json({ error: "Connect Supabase to update recurring expenses." }, { status: 503 });
-  const body = await request.json() as { name?: string; isActive?: boolean };
-  if (!body.name || typeof body.isActive !== "boolean") return NextResponse.json({ error: "Name and status are required." }, { status: 400 });
-  const result = await current.prisma.recurringExpense.updateMany({ where: { ownerId: current.user.id, name: body.name }, data: { isActive: body.isActive } });
+  if (!current) return NextResponse.json({ error: "Connect the Prisma database to update recurring expenses." }, { status: 503 });
+  const body = await request.json() as { id?: string; name?: string; isActive?: boolean; categoryId?: string; amount?: number; nextDueAt?: string; frequency?: "WEEKLY" | "BIWEEKLY" | "MONTHLY" | "QUARTERLY" | "YEARLY" };
+  if (!body.id) return NextResponse.json({ error: "Recurring expense id is required." }, { status: 400 });
+  const existing = await current.prisma.recurringExpense.findFirst({ where: { id: body.id, ownerId: current.user.id } });
+  if (!existing) return NextResponse.json({ error: "Recurring expense not found." }, { status: 404 });
+
+  let categoryId = existing.categoryId;
+  if (body.categoryId) {
+    const category = await current.prisma.category.findFirst({ where: { id: body.categoryId, ownerId: current.user.id } });
+    if (!category) return NextResponse.json({ error: "Category not found." }, { status: 404 });
+    categoryId = category.id;
+  }
+
+  const data = await current.prisma.recurringExpense.update({
+    where: { id: existing.id },
+    data: {
+      ...(body.name !== undefined ? { name: body.name } : {}),
+      ...(body.amount !== undefined ? { amount: body.amount } : {}),
+      ...(body.isActive !== undefined ? { isActive: body.isActive } : {}),
+      ...(body.nextDueAt ? { nextDueAt: new Date(body.nextDueAt) } : {}),
+      ...(body.frequency ? { frequency: body.frequency } : {}),
+      categoryId,
+    },
+    include: { category: true },
+  });
+  return NextResponse.json({ data });
+}
+
+export async function DELETE(request: Request) {
+  const current = await context();
+  if (!current) return NextResponse.json({ error: "Connect the Prisma database to delete recurring expenses." }, { status: 503 });
+  const body = await request.json() as { id?: string };
+  if (!body.id) return NextResponse.json({ error: "Recurring expense id is required." }, { status: 400 });
+  const result = await current.prisma.recurringExpense.deleteMany({ where: { id: body.id, ownerId: current.user.id } });
   if (!result.count) return NextResponse.json({ error: "Recurring expense not found." }, { status: 404 });
-  return NextResponse.json({ data: { updated: result.count } });
+  return NextResponse.json({ data: { deleted: body.id } });
 }
